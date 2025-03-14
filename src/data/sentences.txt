@@ -1,0 +1,9 @@
+time | What time is it?
+time | Could you please tell me the time?
+time | May I know the time?
+time | Would you mind if I ask you the Time?
+date | What is today's date?
+date | What is the date today?
+date | What day is it today?
+date | Please may you tell me the date.
+date | Please may you give me the date.

@@ -1,0 +1,36 @@
+{
+    "greeting": {
+        "patterns": [
+            "hi",
+            "hello",
+            "hey",
+            "holla"
+        ],
+        "responses": [
+            "Thanks for checking in.",
+            "Thank you for being there!"
+        ]
+    },
+    "goodbye": {
+        "patterns": [
+            "bye",
+            "goodbye"
+        ],
+        "responses": [
+            "Have a nice time, bye.",
+            "Thank you for using this service. Goodbye"
+        ]
+    },
+    "thanks": {
+        "patterns": [
+            "thanks",
+            "thank"
+        ],
+        "responses": [
+            "Happy to help!",
+            "Any time!",
+            "You're welcome",
+            "My pleasure"
+        ]
+    }
+}
