@@ -1,6 +1,8 @@
-# Requirements
-- `python -m spacy download en_core_web_sm`
-- `pip install spacy`
-- `pip install beautifulsoup4`
-- `pip install experta`
-- `pip install nltk`
+# AI ChatBot for Rail Ticket Support
+
+## Requirements
+1. Copy the contents of `.env.example` into a `.env` file
+2. Install libraries
+    - `pip install zeep`
+    - `pip install dotenv`
+
