@@ -13,12 +13,14 @@ def setup_client():
     return client
 
 
-def get_depature_board(client, from_station):
+def get_depature_board(client, from_station, to_station):
     try:
         # Get departure board info
-        response = client.service.GetDepartureBoard(
+        response = client.service.GetDepBoardWithDetails(
             numRows=10,
-            crs=from_station
+            crs=from_station,
+            filterCrs=to_station,
+            filterType="to",
         )
         print("🚆 Departure Board Info Found")
         return response
@@ -30,9 +32,11 @@ def get_depature_board(client, from_station):
 
 client = setup_client()
 
-departure_board = get_depature_board(client, "NRW")
+specific_departure_board = get_depature_board(client, "NRW", "LST")
 
-print(departure_board)
-
-for service in departure_board.trainServices.service:
-    print(service.std, service.etd, service.destination.location[0].locationName)
+if specific_departure_board:
+    for service in specific_departure_board.trainServices.service:
+        print(service.std, service.destination.location[0].locationName)
+        for stop in service.subsequentCallingPoints.callingPointList[0].callingPoint:
+            print(stop.locationName)
+        print("\n")
