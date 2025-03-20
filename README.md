@@ -5,4 +5,6 @@
 2. Install libraries
     - `pip install zeep`
     - `pip install dotenv`
-
+    - `pip install spacy`
+        - Install spacy model: `python -m spacy download en_core_web_sm`
+    - `pip install spellchecker`
