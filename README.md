@@ -14,5 +14,5 @@
         https://visualstudio.microsoft.com/visual-cpp-build-tools/ ~ 7gb
 
 3. Download Llama (You might need to download this before llama-cpp-python)
-    - "https://huggingface.co/TheBloke/Llama-2-7B-GGUF/blob/main/llama-2-7b.Q4_K_S.gguf"
+    - "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/blob/main/llama-2-7b-chat.Q4_K_M.gguf"
     - download and copy path to .env file
