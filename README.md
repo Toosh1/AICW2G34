@@ -8,3 +8,11 @@
     - `pip install spacy`
         - Install spacy model: `python -m spacy download en_core_web_sm`
     - `pip install spellchecker`
+    - cmake and c++ tools needed for below:
+        - `pip install llama-cpp-python` 
+        - if failed download c++ build tools through: 
+        https://visualstudio.microsoft.com/visual-cpp-build-tools/ ~ 7gb
+
+3. Download Llama (You might need to download this before llama-cpp-python)
+    - "https://huggingface.co/TheBloke/Llama-2-7B-GGUF/blob/main/llama-2-7b.Q4_K_S.gguf"
+    - download and copy path to .env file
