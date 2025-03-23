@@ -23,70 +23,59 @@ def correct_spelling(word):
     corrected_word = spell.correction(word)
     return corrected_word if corrected_word else word
 
-def extract_stations(sentence):
-    sentence_corrected = ""
-    for word in sentence.split():
-        sentence_corrected += correct_spelling(word) + " "
+
+def extract_time(sentence):
+    doc = nlp(sentence)
+    for ent in doc.ents:
+        print(ent.text, ent.label_)
+        if ent.label_ == "TIME":
+            try:
+                return ent.text
+            except ValueError:
+                pass
+
+    return None
+
+def extract_single_station(sentence):
+    sentence_corrected = " ".join(correct_spelling(word) for word in sentence.split())
     doc = nlp(sentence_corrected)
 
-    from_station, to_station = None, None
     matches = matcher(doc)
     detected_stations = {doc[start:end].text.lower() for _, start, end in matches}
 
-    tokens = [token.text.lower() for token in doc]
-    detected_stations = {correct_spelling(station) for station in detected_stations}
+    if detected_stations:
+        return " ".join(detected_stations)
 
-    if "from" in tokens:
-        idx = tokens.index("from") + 1
-        for station in detected_stations:
-            if station.lower().startswith(doc[idx].text.lower()):
-                from_station = station
+    return None
 
-    if "to" in tokens:
-        idx = tokens.index("to") + 1
-        for station in detected_stations:
-            if station.lower().startswith(doc[idx].text.lower()):
-                to_station = station
+
+def find_stations(sentence):
+    sentence_corrected = " ".join(correct_spelling(word) for word in sentence.split())
+    doc = nlp(sentence_corrected)
+    matches = matcher(doc)
+    detected_stations = [doc[start:end].text.lower() for _, start, end in matches]
+
+    from_station = None
+    to_station = None
+    sentence_lower = sentence_corrected.lower()
+    for station in detected_stations[:]:
+        if f"from {station}" in sentence_lower:
+            from_station = station
+            detected_stations.remove(station)
+        elif f"to {station}" in sentence_lower:
+            to_station = station
+            detected_stations.remove(station)
+
+
+    if (from_station is None) and (len(detected_stations) > 1):
+        from_station = detected_stations[0]
+
+    if (to_station is None) and (len(detected_stations) > 1):
+        to_station = detected_stations[0]
+
 
     return from_station, to_station
 
-def extract_times(sentence):
-    sentence_corrected = ""
-    for word in sentence.split():
-        sentence_corrected += correct_spelling(word) + " "
-    doc = nlp(sentence_corrected)
-
-    ideal_departure_time, ideal_arrival_time = None, None
-    matches = matcher(doc)
-
-    tokens = [token.text.lower() for token in doc]
-
-    for token in tokens:
-        if token.ent_type_ == "TIME":
-            time_value = token.text
-            time_obj = datetime.strptime(time_value, "%H:%M")
-            if "from" in tokens or "depart" in tokens:
-                ideal_departure_time = time_obj
-            elif "to" in tokens or "arrive" in tokens:
-                ideal_arrival_time = time_obj
-
-    return ideal_departure_time, ideal_arrival_time
-
-# WIP: Might be worth having to determine if further information is needed
-'''
-If single_ticket is true, further prompting needed by chatbot until it's clear
-user intends ticket to be single or further information is obtained
-'''
-def is_ticket_single(from_station, to_station,
-                                                ideal_departure_time, ideal_arrival_time):
-    if (from_station is None and to_station is not None):
-        single_ticket = True
-    elif (to_station is None and from_station is not None):
-        single_ticket = True
-    else:
-        single_ticket = False
-
-    return single_ticket
 
 def get_coded_stations(station):
     try:
@@ -95,14 +84,12 @@ def get_coded_stations(station):
     except ValueError:
         return None
 
+
+
+
 if __name__ == "__main__":
     setup()
     while True:
         sentence = input("Enter a sentence: ")
-
-        from_station, to_station = extract_stations(sentence)
-        ideal_departure_time, ideal_arrival_time = extract_times(sentence)
-
-        print(f"From: {from_station}, To: {to_station}")
-        print(f"Departing at: {ideal_departure_time}, Arriving at: {ideal_arrival_time}")
-        print(f"From: {get_coded_stations(from_station)}, To: {get_coded_stations(to_station)}")
+        print(find_stations(sentence))
+        print(extract_time(sentence))
