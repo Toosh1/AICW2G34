@@ -44,6 +44,8 @@ conversation_end = False
 
 # WIP: At the moment the conversation loops indefinitely
 # Needs to check user's input against ALL intents then respond accordingly
-while (conversation_end == False):
-    user_input = input("USER: ")
-    chatbot_response(user_input)
+
+if __name__ == "__main__":
+    while (conversation_end == False):
+        user_input = input("USER: ")
+        chatbot_response(user_input)

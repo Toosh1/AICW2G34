@@ -13,6 +13,9 @@
         - if failed download c++ build tools through: 
         https://visualstudio.microsoft.com/visual-cpp-build-tools/ ~ 7gb
 
+    - `pip install bs4`
+    - `pip install experta`
+
 3. Download Llama (You might need to download this before llama-cpp-python)
     - "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/blob/main/llama-2-7b-chat.Q4_K_M.gguf"
     - download and copy path to .env file
