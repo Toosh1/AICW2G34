@@ -6,6 +6,9 @@ import spellchecker
 from datetime import datetime
 from spacy.lang.en.stop_words import STOP_WORDS
 
+
+
+
 def setup():
     global nlp, spell, matcher, cleaned_stations, stations_df
     nlp = spacy.load("en_core_web_sm")
@@ -36,7 +39,6 @@ def correct_spelling(word):
 def extract_time(sentence):
     doc = nlp(sentence)
     for ent in doc.ents:
-        print(ent.text, ent.label_)
         if ent.label_ == "TIME":
             try:
                 return ent.text
@@ -63,9 +65,12 @@ def find_stations(sentence):
     doc = nlp(sentence_corrected)
     matches = matcher(doc)
     detected_stations = [doc[start:end].text.lower() for _, start, end in matches]
+    detected_stations = sorted(detected_stations, key=len, reverse=True)
 
     from_station = None
     to_station = None
+    close_stations =None
+    
     sentence_lower = sentence_corrected.lower()
     for station in detected_stations[:]:
         if f"from {station}" in sentence_lower:
@@ -77,32 +82,33 @@ def find_stations(sentence):
             detected_stations.remove(station)
             sentence_lower = sentence_lower.replace(f"to {station}", "")
 
-    if (from_station is None) and (len(detected_stations) > 1):
-        from_station = detected_stations[0]
-        sentence_lower = sentence_lower.replace(from_station, "")
 
     if (to_station is None) and (len(detected_stations) > 1):
         to_station = detected_stations[0]
         sentence_lower = sentence_lower.replace(to_station, "")
 
-    if from_station is None or to_station is None:
-        print(find_closest_station(sentence_lower))
+    elif (from_station is None) and (len(detected_stations) > 1):
+        from_station = detected_stations[0]
+        sentence_lower = sentence_lower.replace(from_station, "")
 
-    return from_station, to_station
+    
+    if from_station is None or to_station is None:
+        close_stations = find_closest_station(sentence_lower)
+
+    return from_station, to_station, close_stations
 
 def find_closest_station(sentence):
     sentence_corrected = " ".join(correct_spelling(word) for word in sentence.split())
     doc = nlp(sentence_corrected)
 
-    # Remove stop words from the sentence
     filtered_words = [word for word in sentence_corrected.lower().split() if word not in STOP_WORDS]
-
-    # Check for partial matches in cleaned_stations
+    
     partial_matches = []
     for word in filtered_words:
-        partial_matches.extend([station for station in cleaned_stations if word in station])
-    partial_matches = list(set(partial_matches))
-    return partial_matches[:4] if partial_matches else None
+        similair = [station for station in cleaned_stations if word in station]
+        if similair != []:
+            partial_matches = [word,similair[:5]]
+    return partial_matches
 
 
 def get_coded_stations(station):
