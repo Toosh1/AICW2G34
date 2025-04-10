@@ -1,0 +1,10 @@
+{
+    "departure_prepositions": [
+        {"LOWER": {"in": ["from", "out of", "leaving", "departing", "depart", "at", "leave"]}},
+        {"ENT_TYPE": "GPE"}
+    ],
+    "arrival_prepositions": [
+        {"LOWER": {"in": ["to", "towards", "arriving at"]}},
+        {"ENT_TYPE": "GPE"}
+    ]
+}
