@@ -2,7 +2,6 @@
 Pisces: A Train Travel Assistant
 
 To Do
-- Get date / time of travel
 - Get is return?
 - Get number of passengers
     - Get number of adults
@@ -13,10 +12,11 @@ To Do
 
 import re
 import spacy
+import dateparser
 from spacy.matcher import Matcher
 from spellchecker import SpellChecker
 from rapidfuzz import process
-from chatbot.database import station_codes, get_departure_arrival_patterns, get_prepositions
+from database import station_codes, get_extraction_patterns, get_prepositions
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
@@ -70,13 +70,19 @@ def add_matcher_patterns():
     '''
     global matcher
     matcher = Matcher(nlp.vocab)
-    matcher.add("TrainRoute", get_departure_arrival_patterns(), greedy="LONGEST")
+    matcher.add("TrainRoute", get_extraction_patterns(), greedy="LONGEST")
+
+
+def extract_date_time(text: str) -> str:
+    '''
+    Extract date and time from the text using regex.
+    :param text: The input text to search for date and time.
+    :return: The extracted date and time or None if not found.
+    '''
     
-    # # Add custom patterns from responses
-    # for intent, data in responses.items():
-    #     # Convert each pattern into a Doc object using nlp.make_doc
-    #     patterns = [nlp.make_doc(pattern) for pattern in data["patterns"]]
-    #     matcher.add(intent, patterns)
+    text = preprocess_text(text, False)
+    text_result = dateparser.parse(text)
+    return text_result
 
 
 def correct_spelling(word) -> str:
@@ -119,15 +125,15 @@ def find_closest_stations(query: str) -> list:
     return [station[0] for station in similar_stations]
 
 
-def extract_train_info(user_input):
+def extract_train_info(text: str) -> tuple:
     '''
     Extract train information from the user input using spaCy's matcher.
     :param user_input: The input text from the user.
-    :return: None
+    :return: A tuple containing the departure and arrival stations and similar stations.
     '''
-    # Process the input text with spaCy
-    doc = nlp(user_input)
     
+    text = preprocess_text(text)
+    doc = nlp(text)
     # Apply the matcher to the document
     matches = matcher(doc)
     
@@ -141,23 +147,15 @@ def extract_train_info(user_input):
     
     for _, start, end in matches:
         span = doc[start:end]
-        print(f"Matched span: {span.text}")
         departure = extract_station(departure, span.text.lower(), departure_terms)
         arrival = extract_station(arrival, span.text.lower(), arrival_terms)
         
-    similar_stations = [
-        find_closest_stations(ent.text) for ent in doc.ents if ent.label_ == "PLACE"
-    ]
+    similar_stations = [find_closest_stations(ent.text) for ent in doc.ents if ent.label_ == "PLACE"]
     
-    print(f"Departure: {departure}")
-    print(f"Arrival: {arrival}")
-    print(f"Similar stations: {similar_stations}")
-    
-    for ent in doc.ents:
-        print(f"Entity: {ent.text}, Label: {ent.label_}")
+    return departure, arrival, similar_stations    
 
 
-def preprocess_text(text):
+def preprocess_text(text, spell_check=True):
     '''
     Preprocess the input text by normalizing it to lower case and removing special characters.
     :param text: The input text to preprocess.
@@ -172,11 +170,14 @@ def preprocess_text(text):
     tokens = cleaned_text.split()
     
     # Loop through tokens and correct spelling
-    corrected_tokens = [correct_spelling(token) for token in tokens]
+    if spell_check:
+        # Correct spelling of tokens
+        tokens = [correct_spelling(token) for token in tokens]
     
     # Apply lemmatization
-    lemmatized_tokens = [token.lemma_ for token in nlp(" ".join(corrected_tokens))]
-    text = " ".join(lemmatized_tokens)
+    corrected_tokens = [token.lemma_ for token in nlp(" ".join(tokens))]
+        
+    text = " ".join(corrected_tokens)
     
     return text
 
@@ -192,8 +193,8 @@ def main():
     while True:
         user_input = input("You: ")
         print("--" * 30)
-        user_input = preprocess_text(user_input)
-        extract_train_info(user_input)
+        departure, arrival, similar_stations = extract_train_info(user_input)
+        extract_date_time(user_input)
 
 
 if __name__ == "__main__":
