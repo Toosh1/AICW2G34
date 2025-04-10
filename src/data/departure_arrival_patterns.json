@@ -1,10 +1,10 @@
 {
     "departure_prepositions": [
         {"LOWER": {"in": ["from", "out of", "leave", "depart", "at"]}},
-        {"ENT_TYPE": "GPE", "OP": "+"}
+        {"ENT_TYPE": "STATION", "OP": "+"}
     ],
     "arrival_prepositions": [
         {"LOWER": {"in": ["to", "towards", "arrive at", "for"]}},
-        {"ENT_TYPE": "GPE", "OP": "+"}
+        {"ENT_TYPE": "STATION", "OP": "+"}
     ]
 }
