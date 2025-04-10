@@ -2,8 +2,13 @@
 Pisces: A Train Travel Assistant
 
 To Do
-- Check if station exists, if it does not, suggest the closest matches e.g.
-    - Maidstone -> [Maidstone East, Maidstone West, Maidstone Barracks]
+- Get date / time of travel
+- Get is return?
+- Get number of passengers
+    - Get number of adults
+    - Get number of children
+- Get number of railcards
+    - Get type of railcard
 '''
 
 import re
@@ -11,7 +16,7 @@ import spacy
 from spacy.matcher import Matcher
 from spellchecker import SpellChecker
 from rapidfuzz import process
-from knowledge_base import station_codes, get_departure_arrival_patterns, get_prepositions
+from chatbot.database import station_codes, get_departure_arrival_patterns, get_prepositions
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
