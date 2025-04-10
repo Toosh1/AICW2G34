@@ -52,13 +52,14 @@ def add_matcher_patterns():
     '''
     global matcher
     matcher = Matcher(nlp.vocab)
-    matcher.add("TrainRoute", get_departure_arrival_patterns())
+    matcher.add("TrainRoute", get_departure_arrival_patterns(), greedy="LONGEST")
     
     # # Add custom patterns from responses
     # for intent, data in responses.items():
     #     # Convert each pattern into a Doc object using nlp.make_doc
     #     patterns = [nlp.make_doc(pattern) for pattern in data["patterns"]]
     #     matcher.add(intent, patterns)
+
 
 def extract_station(type: str, text: str, terms: list) -> str:
     # Return station name if already found
@@ -93,17 +94,13 @@ def extract_train_info(user_input):
     
     for _, start, end in matches:
         span = doc[start:end]
-        
+
         departure = extract_station(departure, span.text.lower(), departure_terms)
         arrival = extract_station(arrival, span.text.lower(), arrival_terms)
         
     print(f"Departure: {departure}")
     print(f"Arrival: {arrival}")
-    
-    for ent in doc.ents:
-        print(f"Entity: {ent.text}, Label: {ent.label_}")
-    
-    # I want to go from Maidstone East to Norwich
+
 
 def preprocess_text(text):
     '''
@@ -118,11 +115,12 @@ def preprocess_text(text):
     
     tokens = cleaned_text.split()
     
-        
     # Loop through tokens and correct spelling
     corrected_tokens = [spell.correction(token) for token in tokens]
-
-    text = " ".join(corrected_tokens)
+    
+    # Apply lemmatization
+    lemmatized_tokens = [token.lemma_ for token in nlp(" ".join(corrected_tokens))]
+    text = " ".join(lemmatized_tokens)
     
     return text
 
