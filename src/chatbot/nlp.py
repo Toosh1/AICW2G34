@@ -38,7 +38,7 @@ def add_station_entity_ruler():
     Add a custom entity ruler to the spaCy pipeline for station names.
     :return: None
     '''
-    ruler = nlp.add_pipe("entity_ruler", config={"overwrite_ents": True}, name="station_ruler", last=True)
+    ruler = nlp.add_pipe("entity_ruler", config={"overwrite_ents": True}, name="station_ruler", before="ner")
     patterns = [{"label": "GPE", "pattern": station} for station in station_codes.keys()]
     ruler.add_patterns(patterns)
 
@@ -59,6 +59,16 @@ def add_matcher_patterns():
     #     # Convert each pattern into a Doc object using nlp.make_doc
     #     patterns = [nlp.make_doc(pattern) for pattern in data["patterns"]]
     #     matcher.add(intent, patterns)
+
+def extract_station(type: str, text: str, terms: list) -> str:
+    # Return station name if already found
+    if not (type is None):
+        return type
+    
+    for term in terms:
+        match = re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE)
+        if match:
+            return re.sub(rf"\b{re.escape(term)}\b", "", text, count=1, flags=re.IGNORECASE).strip()
 
 
 def extract_train_info(user_input):
@@ -84,24 +94,14 @@ def extract_train_info(user_input):
     for _, start, end in matches:
         span = doc[start:end]
         
-        # Handle departure terms
-        if departure is None:
-            for term in departure_terms:
-                if term not in span.text.lower():
-                    continue
-                departure = span.text.replace(term, "").strip()
-                break
+        departure = extract_station(departure, span.text.lower(), departure_terms)
+        arrival = extract_station(arrival, span.text.lower(), arrival_terms)
         
-        # Handle arrival terms
-        if arrival is None:
-            for term in arrival_terms:
-                if term not in span.text.lower():
-                    continue
-                arrival = span.text.replace(term, "").strip()
-                break
-    
     print(f"Departure: {departure}")
     print(f"Arrival: {arrival}")
+    
+    for ent in doc.ents:
+        print(f"Entity: {ent.text}, Label: {ent.label_}")
     
     # I want to go from Maidstone East to Norwich
 
@@ -137,6 +137,7 @@ def main():
     
     while True:
         user_input = input("You: ")
+        print("--" * 30)
         user_input = preprocess_text(user_input)
         extract_train_info(user_input)
 
