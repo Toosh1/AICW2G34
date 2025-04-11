@@ -9,7 +9,6 @@ STATION_CODES_PATH = './src/data/stations.csv'
 RESPONSES_PATH = './src/data/intentions.json'
 EXTRACTION_PATH = './src/data/extraction_patterns.json'
 
-
 def load_station_codes() -> dict[str, str]:
     """
     Load station codes from a CSV file into a dictionary.
@@ -84,6 +83,8 @@ def get_prepositions() -> dict[str, list]:
     """
     dictionary = {}
     for intent, patterns in extraction_patterns.items():
+        if "preposition" not in intent:
+            continue
         dictionary[intent] = patterns[0]["LOWER"]["in"]
     return dictionary
 
@@ -94,9 +95,26 @@ def get_extraction_patterns() -> list[list]:
     :return: A list of all patterns.
     '''
     all_patterns = []
-    for _, patterns in extraction_patterns.items():
+    for name, patterns in extraction_patterns.items():
+        if not "preposition" in name:
+            continue
         all_patterns.extend([patterns])
     return all_patterns
+
+def get_next_series_patterns() -> list[list]:
+    '''
+    Get all next series patterns.
+    :return: A list of all next series patterns.
+    '''
+    return extraction_patterns["next_series"]
+
+
+def get_month_patterns() -> list[list]:
+    '''
+    Get all month patterns.
+    :return: A list of all month patterns.
+    '''
+    return extraction_patterns["months"]
 
 
 station_codes = load_station_codes()

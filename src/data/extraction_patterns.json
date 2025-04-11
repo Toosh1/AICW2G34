@@ -6,5 +6,12 @@
     "arrival_prepositions": [
         {"LOWER": {"in": ["to", "towards", "arrive at", "for"]}},
         {"ENT_TYPE": "STATION", "OP": "+"}
+    ],
+    "next_series": [
+        {"LOWER": "next"},
+        {"LEMMA": {"in": ["month", "week", "day", "hour"]}}
+    ],
+    "months": [
+        {"LOWER": {"in": ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]}}
     ]
 }
