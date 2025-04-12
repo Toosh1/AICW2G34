@@ -1,7 +1,6 @@
-import re
+import dateparser, re
 from spellchecker import SpellChecker
 from datetime import datetime
-import dateparser
 
 spell = SpellChecker()
 
@@ -63,6 +62,12 @@ def format_time(time_str: str) -> str:
     
     # Regex to remove any space between the time and the 'AM/PM'
     time_str = re.sub(r'(\d{1,2}:\d{2})(am|pm)', r'\1 \2', time_str, flags=re.IGNORECASE)
+    
+    # Remove any 0s before the hour e.g 09:00am -> 9:00am
+    time_str = re.sub(r'0(\d{1}:\d{2})', r'\1', time_str)
+    
+    # upper() any instances of "AM" or "PM"
+    time_str = re.sub(r'(?<=\s)(am|pm)', lambda x: x.group(0).upper(), time_str, flags=re.IGNORECASE)
 
     return time_str
 

@@ -18,11 +18,7 @@ Checklist
     - No journey options
 '''
 
-# Import necessary libraries
-import sys
-import os
-import re
-import spacy
+import sys, os, re, spacy
 from spacy.matcher import Matcher
 from rapidfuzz import process
 
@@ -32,8 +28,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Import custom modules
 from database import *
 from utils.input_handler import add_to_vocabulary, preprocess_text, preprocess_time, parse_time
-import json
-
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
@@ -88,7 +82,7 @@ def add_series_entity_ruler() -> None:
     ruler = nlp.add_pipe("entity_ruler", name="month_ruler", after="ner")
     month_pattern = [{"label": "MONTH", "pattern": get_month_patterns()}]
     ruler.add_patterns(month_pattern)
-    
+
 
 def add_matcher_patterns() -> None:
     '''
@@ -222,6 +216,7 @@ def extract_after_before(text: str) -> str:
     matches = matcher(doc)
 
     return [nlp.vocab.strings[match_id] for match_id, _, _ in matches]
+
 
 def main() -> None:
     '''

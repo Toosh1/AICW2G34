@@ -1,5 +1,4 @@
-import csv
-import json
+import csv, json
 
 station_codes = {}
 responses = {}
@@ -8,6 +7,7 @@ extraction_patterns = {}
 STATION_CODES_PATH = './src/data/stations.csv'
 RESPONSES_PATH = './src/data/intentions.json'
 EXTRACTION_PATH = './src/data/extraction_patterns.json'
+
 
 def load_station_codes() -> dict[str, str]:
     """
