@@ -2,13 +2,14 @@
 Pisces: A Train Travel Assistant
 
 Checklist
-- Cleanup `train_ticket_handler.py` ✔
-- Run Test Cases on nlp.py
 
 - Extract Stations ✔
 - Extract Date and Time ✔
     - Check if single or return
 - Departing After or Arriving Before ✔
+- Cleanup `train_ticket_handler.py` ✔
+- Run Test Cases on nlp.py ✔
+    - Add more test case parameters
 
 # Current assumptions
     - No railcards
@@ -25,9 +26,8 @@ from rapidfuzz import process
 # Merge the parent directory to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import custom modules
-from database import *
-from utils.input_handler import add_to_vocabulary, preprocess_text, preprocess_time, parse_time
+from chatbot.database import *
+from utils.input_handler import *
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
@@ -39,7 +39,6 @@ def setup() -> None:
     add_series_entity_ruler()
     add_station_entity_ruler()
     add_matcher_patterns()
-    add_to_vocabulary(station_codes.keys())
 
 
 def add_stations_to_vocab() -> None:
@@ -47,9 +46,10 @@ def add_stations_to_vocab() -> None:
     Add station names to the spaCy vocabulary for spell checking.
     :return: None
     '''
-    stations_list = station_codes.keys()
+    stations_list = [station.lower() for station in station_codes.keys()]
     station_words = {token for station in stations_list for token in station.split()}
     add_to_vocabulary(station_words)
+    add_to_vocabulary(stations_list)
 
 
 def add_station_entity_ruler() -> None:
@@ -94,15 +94,8 @@ def add_matcher_patterns() -> None:
     global matcher
     matcher = Matcher(nlp.vocab)
     matcher.add("PREPOSITIONS", get_extraction_patterns(), greedy="LONGEST")
-    matcher.add("ARRIVING", [get_arrive_before_patterns()], greedy="LONGEST")
     matcher.add("DEPARTING", [get_depart_after_patterns()], greedy="LONGEST")
-
-
-def extract_passengers(text: str) -> list:
-    text = preprocess_text(text)
-    adults = None
-    children = None
-    return []
+    matcher.add("ARRIVING", [get_arrive_before_patterns()], greedy="LONGEST")
 
 
 def extract_date_time(text: str) -> str:
@@ -174,16 +167,20 @@ def extract_train_info(text: str) -> tuple:
     :return: A tuple containing the departure and arrival stations and similar stations.
     '''
     
+    # Preprocess the input text
     text = preprocess_text(text)
     doc = nlp(text)
+    
+    # Modify the text, based off the tense of the text and re-process
+    text = modify_tenses(doc).lower()
+    doc = nlp(text)
+    
     # Apply the matcher to the document
     matches = matcher(doc)
-    
     departure = None
     arrival = None
     
     prepositions = get_prepositions()
-    
     departure_terms = prepositions.get("departure_prepositions", [])
     arrival_terms = prepositions.get("arrival_prepositions", [])
     
@@ -191,7 +188,6 @@ def extract_train_info(text: str) -> tuple:
         span = doc[start:end]
         departure = extract_station(departure, span.text.lower(), departure_terms)
         arrival = extract_station(arrival, span.text.lower(), arrival_terms)
-        
     
     similar_stations = []
     
@@ -218,12 +214,9 @@ def extract_after_before(text: str) -> str:
     return [nlp.vocab.strings[match_id] for match_id, _, _ in matches]
 
 
-def main() -> None:
-    '''
-    Main function to run the chatbot.
-    It initializes the chatbot and handles user input.
-    :return: None
-    '''
+setup()
+
+if __name__ == "__main__":
     print("Pisces: Hello There, I am Pisces, your travel assistant. How can I help you today?")
     print("--" * 30)
     
@@ -240,8 +233,3 @@ def main() -> None:
         print(f"Pisces: Date and Time: {date_time}")
         print(f"Pisces: Before/After: {before_after}")
         print("--" * 30)
-
-
-if __name__ == "__main__":
-    setup()
-    main()

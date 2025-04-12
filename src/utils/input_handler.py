@@ -11,6 +11,7 @@ def add_to_vocabulary(words: list) -> None:
 
 def correct_spelling(word: str) -> str:
     '''
+    
     Correct the spelling of a word using the spell checker.
     :param word: The word to correct.
     :return: The corrected word.
@@ -19,21 +20,31 @@ def correct_spelling(word: str) -> str:
     return corrected_word if corrected_word else word
 
 
-def preprocess_text(text: str, spell_check: bool =True) -> str:
+def modify_tenses(doc: object) -> str:
+    modified_tokens = []
+    
+    for token in doc:
+        if token.text == "AT" and token.dep_ == "compound":
+            modified_tokens.append("IN")
+        else:
+            modified_tokens.append(token.text)
+    return " ".join(modified_tokens)
+
+def preprocess_text(text: str, spell_check: bool = True) -> str:
     '''
     Preprocess the input text by normalizing it to lower case and removing special characters.
     :param text: The input text to preprocess.
     :return: The preprocessed text.
     '''
     # Normalize input text to lower case and remove special characters
-    cleaned_text = re.sub(r"[^a-z0-9\s]", "", text)
+    cleaned_text = re.sub(r"[^a-zA-Z0-9\s]", "", text)
     cleaned_text = re.sub(r"\s+", " ", cleaned_text).strip()
-    
+
     tokens = cleaned_text.split()
     
     # Loop through tokens and correct spelling
     if spell_check:
-        tokens = [correct_spelling(token) for token in tokens]
+        tokens = [correct_spelling(token.lower()) for token in tokens]
     
     text = " ".join(tokens).upper()
     

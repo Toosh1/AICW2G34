@@ -1,10 +1,12 @@
 {
     "departure_prepositions": [
-        {"LOWER": {"in": ["from", "out of", "leave", "depart", "at"]}},
+        {"LOWER": {"in": ["from", "of", "leave", "depart", "in"]}, "OP": "?"},
+        {"LEMMA": {"in": ["from", "of", "leave", "depart", "in"]}, "OP": "?"},
         {"ENT_TYPE": "STATION", "OP": "+"}
     ],
     "arrival_prepositions": [
-        {"LOWER": {"in": ["to", "towards", "arrive at", "for"]}},
+        {"LOWER": {"in": ["to", "towards", "for", "at"]}, "OP": "?"},
+        {"LEMMA": {"in": ["to", "towards", "for", "at"]}, "OP": "?"},
         {"ENT_TYPE": "STATION", "OP": "+"}
     ],
     "next_series": [
