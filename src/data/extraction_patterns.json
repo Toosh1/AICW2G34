@@ -13,5 +13,16 @@
     ],
     "months": [
         {"LOWER": {"in": ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]}}
+    ],
+    "return_variations": [
+        {"LEMMA": {"in": ["return", "back", "trip", "roundtrip", "both", "inbound"]}}
+    ],
+    "depart_after": [
+        {"LEMMA": {"in": ["depart", "after", "at"]}},
+        {"ENT_TYPE": "TIME", "OP": "+"}
+    ],
+    "arrive_before": [
+        {"LEMMA": {"in": ["arrive", "before", "by", "reach"]}},
+        {"ENT_TYPE": "TIME", "OP": "+"}
     ]
 }

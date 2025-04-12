@@ -1,15 +1,21 @@
 '''
 Pisces: A Train Travel Assistant
 
-To Do
-- Get return journey
-    - Get travel date
-    - Get return date
-- Get number of passengers
-    - Get number of adults
-    - Get number of children
-- Get number of railcards
-    - Get type of railcard
+Checklist
+- Cleanup `train_ticket_handler.py` ✔
+- Run Test Cases on nlp.py
+
+- Extract Stations ✔
+- Extract Date and Time ✔
+    - Check if single or return
+- Departing After or Arriving Before ✔
+
+# Current assumptions
+    - No railcards
+    - Only 1 adult
+    - No children
+    - No extra time
+    - No journey options
 '''
 
 # Import necessary libraries
@@ -26,6 +32,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Import custom modules
 from database import *
 from utils.input_handler import add_to_vocabulary, preprocess_text, preprocess_time, parse_time
+import json
 
 
 # Load spaCy's English model
@@ -81,7 +88,7 @@ def add_series_entity_ruler() -> None:
     ruler = nlp.add_pipe("entity_ruler", name="month_ruler", after="ner")
     month_pattern = [{"label": "MONTH", "pattern": get_month_patterns()}]
     ruler.add_patterns(month_pattern)
-
+    
 
 def add_matcher_patterns() -> None:
     '''
@@ -93,6 +100,8 @@ def add_matcher_patterns() -> None:
     global matcher
     matcher = Matcher(nlp.vocab)
     matcher.add("PREPOSITIONS", get_extraction_patterns(), greedy="LONGEST")
+    matcher.add("ARRIVING", [get_arrive_before_patterns()], greedy="LONGEST")
+    matcher.add("DEPARTING", [get_depart_after_patterns()], greedy="LONGEST")
 
 
 def extract_passengers(text: str) -> list:
@@ -189,10 +198,30 @@ def extract_train_info(text: str) -> tuple:
         departure = extract_station(departure, span.text.lower(), departure_terms)
         arrival = extract_station(arrival, span.text.lower(), arrival_terms)
         
-    similar_stations = [find_closest_stations(ent.text) for ent in doc.ents if ent.label_ == "PLACE"]
+    
+    similar_stations = []
+    
+    for ent in doc.ents:
+        if not (departure is None or arrival is None):
+            continue
+        if not ent.label_ == "PLACE":
+            continue
+        similar_stations.append(find_closest_stations(ent.text))
     
     return departure, arrival, similar_stations    
 
+
+def extract_after_before(text: str) -> str:
+    '''
+    Extract the time from the text using regex.
+    :param text: The input text to search for time.
+    :return: The extracted time or None if not found.
+    '''
+    text = preprocess_time(text)
+    doc = nlp(text)
+    matches = matcher(doc)
+
+    return [nlp.vocab.strings[match_id] for match_id, _, _ in matches]
 
 def main() -> None:
     '''
@@ -207,11 +236,14 @@ def main() -> None:
         user_input = input("You: ")
         departure, arrival, similar_stations = extract_train_info(user_input)
         journeys, date_time = extract_date_time(user_input)
-        print(f"Departure: {departure}")
-        print(f"Arrival: {arrival}")
-        print(f"Similar stations: {similar_stations}")
-        print(f"Journeys: {', '.join(f'{key}: {", ".join(values)}' for key, values in journeys.items() if values)}")
-        print(f"Date and Time: {date_time}")
+        before_after = extract_after_before(user_input)
+        print(f"Pisces: Departure: {departure}")
+        print(f"Pisces: Arrival: {arrival}")
+        print(f"Pisces: Similar Stations: {similar_stations}")
+        print(f"Pisces: Journey Date: {journeys['DATE']}")
+        print(f"Pisces: Journey Time: {journeys['TIME']}")
+        print(f"Pisces: Date and Time: {date_time}")
+        print(f"Pisces: Before/After: {before_after}")
         print("--" * 30)
 
 

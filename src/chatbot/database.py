@@ -117,6 +117,21 @@ def get_month_patterns() -> list[list]:
     return extraction_patterns["months"]
 
 
+def get_depart_after_patterns() -> list[list]:
+    '''
+    Get all departure after patterns.
+    :return: A list of all departure after patterns.
+    '''
+    return extraction_patterns["depart_after"]
+
+
+def get_arrive_before_patterns() -> list[list]:
+    '''
+    Get all arrival after patterns.
+    :return: A list of all arrival after patterns.
+    '''
+    return extraction_patterns["arrive_before"]
+
 station_codes = load_station_codes()
 responses = load_responses()
 extraction_patterns = load_patterns()
