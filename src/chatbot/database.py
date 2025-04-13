@@ -101,6 +101,7 @@ def get_extraction_patterns() -> list[list]:
         all_patterns.extend([patterns])
     return all_patterns
 
+
 def get_next_series_patterns() -> list[list]:
     '''
     Get all next series patterns.
@@ -119,10 +120,14 @@ def get_month_patterns() -> list[list]:
 
 def get_depart_after_patterns() -> list[list]:
     '''
-    Get all departure after patterns.
-    :return: A list of all departure after patterns.
+    Get all departure patterns.
+    :return: A list of all departure patterns.
     '''
-    return extraction_patterns["depart_after"]
+    patterns = []
+    for name, pattern in extraction_patterns.items():
+        if "depart_" in name:
+            patterns.extend([pattern])
+    return patterns
 
 
 def get_arrive_before_patterns() -> list[list]:
@@ -130,7 +135,12 @@ def get_arrive_before_patterns() -> list[list]:
     Get all arrival after patterns.
     :return: A list of all arrival after patterns.
     '''
-    return extraction_patterns["arrive_before"]
+    patterns = []
+    for name, pattern in extraction_patterns.items():
+        if "arrive_" in name:
+            patterns.extend([pattern])
+    return patterns
+
 
 station_codes = load_station_codes()
 responses = load_responses()

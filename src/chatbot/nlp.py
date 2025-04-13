@@ -31,7 +31,8 @@ from utils.input_handler import *
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
-matcher = None
+preposition_matcher = None
+type_matcher = None
 
 
 def setup() -> None:
@@ -91,11 +92,12 @@ def add_matcher_patterns() -> None:
     The patterns are defined in the knowledge base.
     :return: None
     '''
-    global matcher
-    matcher = Matcher(nlp.vocab)
-    matcher.add("PREPOSITIONS", get_extraction_patterns(), greedy="LONGEST")
-    matcher.add("DEPARTING", [get_depart_after_patterns()], greedy="LONGEST")
-    matcher.add("ARRIVING", [get_arrive_before_patterns()], greedy="LONGEST")
+    global type_matcher, preposition_matcher
+    type_matcher = Matcher(nlp.vocab)
+    preposition_matcher = Matcher(nlp.vocab)
+    preposition_matcher.add("PREPOSITIONS", get_extraction_patterns(), greedy="LONGEST")
+    type_matcher.add("DEPARTING", get_depart_after_patterns(), greedy="LONGEST")
+    type_matcher.add("ARRIVING", get_arrive_before_patterns(), greedy="LONGEST")
 
 
 def extract_date_time(text: str) -> str:
@@ -172,11 +174,11 @@ def extract_train_info(text: str) -> tuple:
     doc = nlp(text)
     
     # Modify the text, based off the tense of the text and re-process
-    text = modify_tenses(doc).lower()
+    text = modify_tenses(doc)
     doc = nlp(text)
     
     # Apply the matcher to the document
-    matches = matcher(doc)
+    matches = preposition_matcher(doc)
     departure = None
     arrival = None
     
@@ -184,7 +186,9 @@ def extract_train_info(text: str) -> tuple:
     departure_terms = prepositions.get("departure_prepositions", [])
     arrival_terms = prepositions.get("arrival_prepositions", [])
     
-    for _, start, end in matches:
+    for match_id, start, end in matches:
+        if not nlp.vocab.strings[match_id] == "PREPOSITIONS":
+            continue
         span = doc[start:end]
         departure = extract_station(departure, span.text.lower(), departure_terms)
         arrival = extract_station(arrival, span.text.lower(), arrival_terms)
@@ -207,14 +211,24 @@ def extract_after_before(text: str) -> str:
     :param text: The input text to search for time.
     :return: The extracted time or None if not found.
     '''
-    text = preprocess_time(text)
+    text = preprocess_time(text).upper()
     doc = nlp(text)
-    matches = matcher(doc)
-
-    return [nlp.vocab.strings[match_id] for match_id, _, _ in matches]
-
+    text = lemmatize_text(doc).upper()
+    doc = nlp(text)
+    print(f"Pisces: Preprocessed Text: {text}")
+    
+    matches = type_matcher(doc)
+    
+    patterns = []
+    
+    for match_id, _, _ in matches:
+        if not nlp.vocab.strings[match_id] in ["DEPARTING", "ARRIVING"]:
+            continue
+        patterns.append(nlp.vocab.strings[match_id])
+    return patterns
 
 setup()
+
 
 if __name__ == "__main__":
     print("Pisces: Hello There, I am Pisces, your travel assistant. How can I help you today?")

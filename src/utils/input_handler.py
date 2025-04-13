@@ -20,6 +20,16 @@ def correct_spelling(word: str) -> str:
     return corrected_word if corrected_word else word
 
 
+def lemmatize_text(doc: object) -> str:
+    '''
+    Lemmatize the input text using spaCy.
+    :param doc: The input text to lemmatize.
+    :return: The lemmatized text.
+    '''
+    lemmatized_tokens = [token.lemma_ if token.lemma_ != "-PRON-" else token.text for token in doc]
+    return " ".join(lemmatized_tokens)
+
+
 def modify_tenses(doc: object) -> str:
     modified_tokens = []
     
@@ -29,6 +39,7 @@ def modify_tenses(doc: object) -> str:
         else:
             modified_tokens.append(token.text)
     return " ".join(modified_tokens)
+
 
 def preprocess_text(text: str, spell_check: bool = True) -> str:
     '''
@@ -68,7 +79,7 @@ def format_time(time_str: str) -> str:
     '''
     
     # Regex pattern to find times like '1am', '1pm', etc and convert them to '01:00am', '01:00pm'
-    pattern = r'(?<=\b)(\d{1})(am|pm)\b'
+    pattern = r'\b(1[0-2]|[1-9])\s*(am|pm)\b'
     time_str = re.sub(pattern, add_leading_zero, time_str)
     
     # Regex to remove any space between the time and the 'AM/PM'
@@ -77,8 +88,11 @@ def format_time(time_str: str) -> str:
     # Remove any 0s before the hour e.g 09:00am -> 9:00am
     time_str = re.sub(r'0(\d{1}:\d{2})', r'\1', time_str)
     
-    # upper() any instances of "AM" or "PM"
+    # Use upper() on any instances of "AM" or "PM"
     time_str = re.sub(r'(?<=\s)(am|pm)', lambda x: x.group(0).upper(), time_str, flags=re.IGNORECASE)
+
+    # Remove any trailing zeros in the time string    
+    time_str = re.sub(r'(?<=\d{2}:\d{2}):00\b', '', time_str)
 
     return time_str
 
@@ -112,3 +126,4 @@ def parse_time(journey: dict[str, str]) -> str:
                 continue
             parsed_date = result
     return parsed_date.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Original: {example} | Formatted: {format_time(example)}")

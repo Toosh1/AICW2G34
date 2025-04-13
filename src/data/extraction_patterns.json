@@ -1,30 +1,44 @@
 {
     "departure_prepositions": [
-        {"LOWER": {"in": ["from", "of", "leave", "depart", "in"]}, "OP": "?"},
-        {"LEMMA": {"in": ["from", "of", "leave", "depart", "in"]}, "OP": "?"},
+        {"LOWER": {"in": ["from", "of", "leave", "depart", "in"]}},
         {"ENT_TYPE": "STATION", "OP": "+"}
     ],
     "arrival_prepositions": [
-        {"LOWER": {"in": ["to", "towards", "for", "at"]}, "OP": "?"},
-        {"LEMMA": {"in": ["to", "towards", "for", "at"]}, "OP": "?"},
+        {"LOWER": {"in": ["to", "towards", "for", "at"]}},
         {"ENT_TYPE": "STATION", "OP": "+"}
     ],
     "next_series": [
         {"LOWER": "next"},
-        {"LEMMA": {"in": ["month", "week", "day", "hour"]}}
+        {"LOWER": {"in": ["month", "week", "day", "hour"]}}
     ],
     "months": [
         {"LOWER": {"in": ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]}}
     ],
     "return_variations": [
-        {"LEMMA": {"in": ["return", "back", "trip", "roundtrip", "both", "inbound"]}}
+        {"LOWER": {"in": ["return", "back", "trip", "roundtrip", "both", "inbound"]}}
     ],
-    "depart_after": [
-        {"LEMMA": {"in": ["depart", "after", "at"]}},
-        {"ENT_TYPE": "TIME", "OP": "+"}
+    "depart_after_general": [
+        {"LOWER": {"in": ["leave", "exit", "depart"]}},
+        {"LOWER": {"in": ["there"]}, "OP": "?"},
+        {"LOWER": {"in": ["at", "by", "after"]}},
+        {"ENT_TYPE": "TIME"}
     ],
-    "arrive_before": [
-        {"LEMMA": {"in": ["arrive", "before", "by", "reach"]}},
-        {"ENT_TYPE": "TIME", "OP": "+"}
+    "depart_after_station": [
+        {"LOWER": {"in": ["leave", "exit", "depart"]}},
+        {"ENT_TYPE": {"in": ["STATION", "PLACE"]}, "OP": "+"},
+        {"LOWER": {"in": ["at", "by", "after"]}},
+        {"ENT_TYPE": "TIME"}
+    ],
+    "arrive_before_general": [
+        {"LOWER": {"in": ["arrive", "to", "in", "at", "reach", "get", "over"]}},
+        {"LOWER": {"in": ["there", "that place"]}, "OP": "?"},
+        {"LOWER": {"in": ["at", "by", "before"]}},
+        {"ENT_TYPE": "TIME"}
+    ],
+    "arrive_before_station": [
+        {"LOWER": {"in": ["to", "in", "at", "reach", "into"]}},
+        {"ENT_TYPE": {"in": ["STATION", "PLACE"]}, "OP": "+"},
+        {"LOWER": {"in": ["at", "by", "before"]}},
+        {"ENT_TYPE": "TIME"}
     ]
 }

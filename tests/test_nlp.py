@@ -17,7 +17,7 @@ def test_extract_after_before(text: str, expected_label: str) -> None:
 
 
 @pytest.mark.parametrize("text,expected_date,expected_time", [
-    ("I'll travel on the 15th of May at 10am", ["the 15th", "may"], ["10am"]),
+    ("I'll travel on the 15th of May at 10am", ["the 15th", "may"], ["10:00 AM"]),
     ("Book for tomorrow at 3:30pm", ["tomorrow"], ["3:30 PM"]),
     ("On the 2nd at 8 in the morning", ["the 2nd"], ["8 in the morning"]),
 ])
