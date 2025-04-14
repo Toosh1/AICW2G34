@@ -1,54 +1,43 @@
 {
-    "departure_prepositions": [
-        {"LOWER": {"in": ["from", "of", "leave", "depart", "in"]}},
-        {"ENT_TYPE": "STATION", "OP": "+"}
-    ],
-    "arrival_prepositions": [
-        {"LOWER": {"in": ["to", "towards", "for", "at"]}},
+    "station_prepositions": [
         {"ENT_TYPE": "STATION", "OP": "+"}
     ],
     "next_series": [
-        {"LOWER": "next"},
-        {"LOWER": {"in": ["month", "week", "day", "hour"]}}
+        {"LOWER": "next"}
     ],
-    "months": [
-        {"LOWER": {"in": ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]}}
-    ],
-    "return_variations": [
-        {"LOWER": {"in": ["return", "back", "trip", "roundtrip", "both", "inbound", "comeback"]}}
-    ],
-    "depart_after_date": [
-        {"ENT_TYPE": {"in": ["DATE", "TIME"]}},
-        {"LOWER": {"in": ["at", "after"]}},
-        {"ENT_TYPE": "TIME"}
-    ],
-    "depart_after_general": [
-        {"LOWER": {"in": ["leave", "exit", "depart"]}},
-        {"LOWER": {"in": ["there"]}, "OP": "?"},
+    "synonyms": {
+        "arrival": [
+            "to", "towards", "for", "at"
+        ],
+        "departure": [
+            "from", "of", "leave", "depart", "in"
+        ],
+        "depart": [
+            "depart", "leave", "exit", "to", "from", "in"
+        ],
+        "arrive": [
+            "arrive", "to", "in", "at", "reach", "get", "over", "be"
+        ],
+        "return": [
+            "return", "back", "trip", "roundtrip", "both", "inbound", "comeback"
+        ],
+        "months": [
+            "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"
+        ],
+        "time": ["hour", "week", "day", "month"]
+    },
+
+    "time_constraint_default": [
         {"LOWER": {"in": ["at", "by", "after"]}},
         {"ENT_TYPE": "TIME"}
     ],
-    "depart_after_station": [
-        {"LOWER": {"in": ["leave", "exit", "depart", "to"]}},
+
+    "time_constraint_locations": [
         {"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE"]}, "OP": "+"},
-        {"LOWER": {"in": ["at", "by", "after"]}},
-        {"ENT_TYPE": "TIME"}
+        {"LOWER": {"in": ["there"]}, "OP": "?"}
     ],
-    "arrive_before_date": [
-        {"ENT_TYPE": {"in": ["DATE", "PLACE", "TIME"]}},
-        {"LOWER": {"in": ["by", "before"]}},
-        {"ENT_TYPE": "TIME"}
-    ],
-    "arrive_before_general": [
-        {"LOWER": {"in": ["arrive", "to", "in", "at", "reach", "get", "over", "be"]}},
-        {"LOWER": {"in": ["there", "that place"]}, "OP": "?"},
-        {"LOWER": {"in": ["at", "by", "before", "no later than"]}},
-        {"ENT_TYPE": "TIME"}
-    ],
-    "arrive_before_station": [
-        {"LOWER": {"in": ["to", "in", "at", "reach", "into"]}},
-        {"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE"]}, "OP": "+"},
-        {"LOWER": {"in": ["at", "by", "before"]}},
-        {"ENT_TYPE": "TIME"}
+
+    "time_constraint_dates_date": [
+        {"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE", "DATE", "TIME"]}, "OP": "+"}
     ]
 }

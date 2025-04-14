@@ -2,14 +2,14 @@
 # Pisces: A Train Travel Assistant
 
 ## Checklist
-- 1. Get if single ticket or return ticket
-- 2. Extract Stations [✔]
-- 3. Extract Date and Time [✔]
+- Extract Date and Time [✔]
     - Get to_train date and time and return_train date and time […]
-- 4. Departing After or Arriving Before [✔]
-    - Get to_train time_constraint and return_train time_constraint […]
+- Departing After or Arriving Before [✔]
+    - Get to_train time_constraint and return_train time_constraint […] 
+        - Weak matching
 
 ## Assumptions and Limitations
+
 ### NOTE Limitation of `extract_journey_times`
     - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
         - This won't work if the user only enters the date and time for the return journey
@@ -18,12 +18,10 @@
     - More complex vague sentences won't work
         - E.g. "I want to leave tomorrow, come back on the 18th, and I want to go come back at 9am and 8pm respectively"
 
-### NOTE Current assumptions
+### NOTE Current Assumptions
     - No railcards
     - Only 1 adult
     - No children
-    - No extra time
-    - No journey options
 '''
 
 import sys, os, re, spacy
@@ -44,10 +42,8 @@ return_matcher = None
 
 TIME_ENTITIES = ["TIME", "DATE", "ORDINAL", "SERIES", "MONTH"]
 TIME_CONSTRAINTS = ["DEPARTING", "ARRIVING"]
-
-PREPOSITIONS = get_prepositions()
-departure_terms = PREPOSITIONS.get("departure_prepositions", [])
-arrival_terms = PREPOSITIONS.get("arrival_prepositions", [])
+departure_terms = get_prepositions("departure")
+arrival_terms = get_prepositions("arrival")
 
 
 def setup() -> None:
@@ -75,8 +71,8 @@ def add_station_entity_ruler() -> None:
     '''
     ruler = nlp.add_pipe("entity_ruler", config={"overwrite_ents": True}, name="station_ruler", after="ner")
     
-    stations = [station.upper() for station in station_codes.keys()]
     # Remove any overlapping names
+    stations = [station.upper() for station in station_codes.keys()]
     places = {station.split(" ")[0] for station in stations} - set(stations)
 
     station_patterns = [{"label": "STATION", "pattern": station} for station in stations]
@@ -217,9 +213,7 @@ def extract_train_info(text: str) -> tuple:
     departure = None
     arrival = None
     
-    for match_id, start, end in matches:
-        if not nlp.vocab.strings[match_id] == "PREPOSITIONS":
-            continue
+    for _, start, end in matches:
         span = doc[start:end]
         departure = extract_station(departure, span.text.lower(), departure_terms)
         arrival = extract_station(arrival, span.text.lower(), arrival_terms)
@@ -248,6 +242,7 @@ def extract_time_constraints(text: str) -> str:
     doc = nlp(text)
     
     matches = constraint_matcher(doc)
+    
     return [nlp.vocab.strings[match_id] for match_id, _, _ in matches]
 
 

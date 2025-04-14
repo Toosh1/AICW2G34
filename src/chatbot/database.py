@@ -76,29 +76,30 @@ def get_station_code(station_name: str) -> str:
     return station_codes.get(station_name, None)
 
 
-def get_prepositions() -> dict[str, list]:
-    """
-    Get the prepositions used in the patterns.
-    :return: A dictionary where the keys are intents and the values are lists of prepositions.
-    """
-    dictionary = {}
-    for intent, patterns in extraction_patterns.items():
-        if "preposition" not in intent:
-            continue
-        dictionary[intent] = patterns[0]["LOWER"]["in"]
-    return dictionary
+def get_prepositions(term: str) -> dict[str, list]:
+    '''
+    Get the prepositions for a given term.
+    :param term: The term to get prepositions for.
+    :return: A dictionary of prepositions for the term.
+    '''
+    return extraction_patterns["synonyms"][term]
 
 
 def get_extraction_patterns() -> list[list]:
     '''
-    Get all departure and arrival patterns.
-    :return: A list of all patterns.
+    Get all extraction patterns.
+    :return: A list of all extraction patterns.
     '''
+    global extraction_patterns
     all_patterns = []
-    for name, patterns in extraction_patterns.items():
-        if not "preposition" in name:
-            continue
-        all_patterns.extend([patterns])
+    
+    for station_bound in ["departure", "arrival"]:
+        pattern = []
+        synonyms = extraction_patterns["synonyms"][station_bound]
+        synonyms_pattern = get_pattern_array(synonyms)
+        pattern.append(synonyms_pattern)
+        pattern.append(extraction_patterns["station_prepositions"][0])
+        all_patterns.append(pattern)
     return all_patterns
 
 
@@ -107,7 +108,11 @@ def get_next_series_patterns() -> list[list]:
     Get all next series patterns.
     :return: A list of all next series patterns.
     '''
-    return extraction_patterns["next_series"]
+    patterns = extraction_patterns["next_series"]
+    time_series = extraction_patterns["synonyms"]["time"]
+    time_series_pattern = get_pattern_array(time_series)
+    patterns.append(time_series_pattern)
+    return patterns
 
 
 def get_month_patterns() -> list[list]:
@@ -115,7 +120,24 @@ def get_month_patterns() -> list[list]:
     Get all month patterns.
     :return: A list of all month patterns.
     '''
-    return extraction_patterns["months"]
+    return [get_pattern_array(extraction_patterns["synonyms"]["months"])]
+
+
+def get_time_constraint_patterns(synonyms_name: str) -> list[list]:
+    patterns = []
+    synonyms = extraction_patterns["synonyms"][synonyms_name]
+    synonyms_pattern = get_pattern_array(synonyms)
+    
+    default_pattern = extraction_patterns["time_constraint_default"][0]
+    location_patterns = extraction_patterns["time_constraint_locations"]
+    
+    place_pattern = [synonyms_pattern, location_patterns[0], default_pattern]
+    general_pattern = [synonyms_pattern, location_patterns[1], default_pattern]
+    
+    patterns.append(general_pattern)
+    patterns.append(place_pattern)
+    
+    return patterns
 
 
 def get_depart_after_patterns() -> list[list]:
@@ -123,23 +145,15 @@ def get_depart_after_patterns() -> list[list]:
     Get all departure patterns.
     :return: A list of all departure patterns.
     '''
-    patterns = []
-    for name, pattern in extraction_patterns.items():
-        if "depart_" in name:
-            patterns.extend([pattern])
-    return patterns
+    return get_time_constraint_patterns("depart")
 
 
 def get_arrive_before_patterns() -> list[list]:
     '''
-    Get all arrival after patterns.
-    :return: A list of all arrival after patterns.
+    Get all arrival patterns.
+    :return: A list of all arrival patterns.
     '''
-    patterns = []
-    for name, pattern in extraction_patterns.items():
-        if "arrive_" in name:
-            patterns.extend([pattern])
-    return patterns
+    return get_time_constraint_patterns("arrive")
 
 
 def get_return_patterns() -> list[list]:
@@ -147,11 +161,17 @@ def get_return_patterns() -> list[list]:
     Get all return patterns.
     :return: A list of all return patterns.
     '''
-    patterns = []
-    for name, pattern in extraction_patterns.items():
-        if "return_" in name:
-            patterns.extend([pattern])
-    return patterns
+    return [[get_pattern_array(extraction_patterns["synonyms"]["return"])]]
+
+
+def get_pattern_array(arr: list) -> dict:
+    '''
+    Get the pattern array for a given list.
+    :param arr: The list to get the pattern array for.
+    :return: The pattern array.
+    ''' 
+    return {"LOWER": {"in": arr}}
+
 
 station_codes = load_station_codes()
 responses = load_responses()
