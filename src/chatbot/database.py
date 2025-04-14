@@ -142,6 +142,17 @@ def get_arrive_before_patterns() -> list[list]:
     return patterns
 
 
+def get_return_patterns() -> list[list]:
+    '''
+    Get all return patterns.
+    :return: A list of all return patterns.
+    '''
+    patterns = []
+    for name, pattern in extraction_patterns.items():
+        if "return_" in name:
+            patterns.extend([pattern])
+    return patterns
+
 station_codes = load_station_codes()
 responses = load_responses()
 extraction_patterns = load_patterns()

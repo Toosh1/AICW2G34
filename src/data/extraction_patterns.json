@@ -15,7 +15,7 @@
         {"LOWER": {"in": ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]}}
     ],
     "return_variations": [
-        {"LOWER": {"in": ["return", "back", "trip", "roundtrip", "both", "inbound"]}}
+        {"LOWER": {"in": ["return", "back", "trip", "roundtrip", "both", "inbound", "comeback"]}}
     ],
     "depart_after_general": [
         {"LOWER": {"in": ["leave", "exit", "depart"]}},
@@ -30,9 +30,9 @@
         {"ENT_TYPE": "TIME"}
     ],
     "arrive_before_general": [
-        {"LOWER": {"in": ["arrive", "to", "in", "at", "reach", "get", "over"]}},
+        {"LOWER": {"in": ["arrive", "to", "in", "at", "reach", "get", "over", "be"]}},
         {"LOWER": {"in": ["there", "that place"]}, "OP": "?"},
-        {"LOWER": {"in": ["at", "by", "before"]}},
+        {"LOWER": {"in": ["at", "by", "before", "no later than"]}},
         {"ENT_TYPE": "TIME"}
     ],
     "arrive_before_station": [

@@ -126,4 +126,10 @@ def parse_time(journey: dict[str, str]) -> str:
                 continue
             parsed_date = result
     return parsed_date.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"Original: {example} | Formatted: {format_time(example)}")
+
+
+def split_by_return_variations(sentence: str, arr: list) -> list:
+    pattern = r'(' + '|'.join(map(re.escape, arr)) + r')'
+    split_sentence = re.split(pattern, sentence, flags=re.IGNORECASE)
+    split_sentence = [s.strip() for s in split_sentence if s.strip()]
+    return split_sentence
