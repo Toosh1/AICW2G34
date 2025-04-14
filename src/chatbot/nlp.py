@@ -7,10 +7,7 @@
 - 3. Extract Date and Time [✔]
     - Get to_train date and time and return_train date and time […]
 - 4. Departing After or Arriving Before [✔]
-    - Get to_train time_constraint and return_train time_constraint
-
-- Run Test Cases on nlp.py [✔]
-    - Add more test case parameters […]
+    - Get to_train time_constraint and return_train time_constraint […]
 
 ## Assumptions and Limitations
 ### NOTE Limitation of `extract_journey_times`
@@ -239,24 +236,19 @@ def extract_train_info(text: str) -> tuple:
     return departure, arrival, similar_stations    
 
 
-def extract_time_constraints(text: str, is_return_ticket: list) -> str:
+def extract_time_constraints(text: str) -> str:
     '''
     Extract the time from the text using regex.
     :param text: The input text to search for time.
     :return: The extracted time or None if not found.
     '''
-    text = preprocess_time(text).upper()
+    text = preprocess_time(text)
     doc = nlp(text)
-    text = lemmatize_text(doc).upper()
+    text = lemmatize_text(doc)
     doc = nlp(text)
     
     matches = constraint_matcher(doc)
-    
-    patterns = []
-    
-    for match_id, _, _ in matches:
-        patterns.append(nlp.vocab.strings[match_id])
-    return patterns
+    return [nlp.vocab.strings[match_id] for match_id, _, _ in matches]
 
 
 def extract_return_ticket(text: str) -> list:
@@ -288,7 +280,7 @@ if __name__ == "__main__":
         return_phrases = extract_return_ticket(user_input)
         departure, arrival, similar_stations = extract_train_info(user_input)
         outbound, inbound = extract_journey_times(user_input, return_phrases)
-        time_constraints = extract_time_constraints(user_input, return_phrases)
+        time_constraints = extract_time_constraints(user_input)
         print(f"Return Phrases: {return_phrases}")
         print(f"Departure: {departure}")
         print(f"Arrival: {arrival}")

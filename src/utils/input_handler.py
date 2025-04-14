@@ -103,9 +103,7 @@ def preprocess_time(text: str) -> str:
     :param text: The input text to preprocess.
     :return: The preprocessed text.
     '''
-    cleaned_text = text.capitalize()
-    
-    cleaned_text = format_time(cleaned_text)
+    cleaned_text = format_time(text)
     
     return cleaned_text
 

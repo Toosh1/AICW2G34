@@ -17,6 +17,11 @@
     "return_variations": [
         {"LOWER": {"in": ["return", "back", "trip", "roundtrip", "both", "inbound", "comeback"]}}
     ],
+    "depart_after_date": [
+        {"ENT_TYPE": {"in": ["DATE", "TIME"]}},
+        {"LOWER": {"in": ["at", "after"]}},
+        {"ENT_TYPE": "TIME"}
+    ],
     "depart_after_general": [
         {"LOWER": {"in": ["leave", "exit", "depart"]}},
         {"LOWER": {"in": ["there"]}, "OP": "?"},
@@ -24,9 +29,14 @@
         {"ENT_TYPE": "TIME"}
     ],
     "depart_after_station": [
-        {"LOWER": {"in": ["leave", "exit", "depart"]}},
-        {"ENT_TYPE": {"in": ["STATION", "PLACE"]}, "OP": "+"},
+        {"LOWER": {"in": ["leave", "exit", "depart", "to"]}},
+        {"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE"]}, "OP": "+"},
         {"LOWER": {"in": ["at", "by", "after"]}},
+        {"ENT_TYPE": "TIME"}
+    ],
+    "arrive_before_date": [
+        {"ENT_TYPE": {"in": ["DATE", "PLACE", "TIME"]}},
+        {"LOWER": {"in": ["by", "before"]}},
         {"ENT_TYPE": "TIME"}
     ],
     "arrive_before_general": [
@@ -37,7 +47,7 @@
     ],
     "arrive_before_station": [
         {"LOWER": {"in": ["to", "in", "at", "reach", "into"]}},
-        {"ENT_TYPE": {"in": ["STATION", "PLACE"]}, "OP": "+"},
+        {"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE"]}, "OP": "+"},
         {"LOWER": {"in": ["at", "by", "before"]}},
         {"ENT_TYPE": "TIME"}
     ]
