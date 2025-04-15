@@ -160,19 +160,6 @@ def parse_time(journey: dict[str, str]) -> str:
     return parsed_date.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def split_by_return_variations(sentence: str, arr: list) -> list:
-    """
-    Split a sentence by variations of the word "return" and return the split parts.
-    :param sentence: The input sentence to split.
-    :param arr: The list of variations to split by.
-    :return: The list of split parts.
-    """
-    pattern = r"(" + "|".join(map(re.escape, arr)) + r")"
-    split_sentence = re.split(pattern, sentence, flags=re.IGNORECASE)
-    split_sentence = [s.strip() for s in split_sentence if s.strip()]
-    return split_sentence
-
-
 def process_station_name(station_name: str) -> list:
     """
     Process the station name by removing special characters, numbers, and short words.
