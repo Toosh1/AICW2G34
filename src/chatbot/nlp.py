@@ -3,18 +3,18 @@
 
 ## Checklist
 - Extract Date and Time [✔]
-    - Get to_train date and time and return_train date and time […]
-    - TODO Assume Date = TODAY and Time = NOW for the outbound journey if not found
+  - Get to_train date and time and return_train date and time […]
+  - TODO Assume Date = TODAY and Time = NOW for the outbound journey if not found
 - Departing After or Arriving Before [✔]
-    - Loop through return variations to find the split that separates the most date time entities evenly
+  - Loop through return variations to find the split that separates the most date time entities evenly
 
 ## NOTE Limitation of `get_journey_times`
-    - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
-        - This won't work if the user only enters the date and time for the return journey
+  - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
+    - This won't work if the user only enters the date and time for the return journey
 ## NOTE Current Assumptions
-    - No railcards
-    - Only 1 adult
-    - No children
+  - No railcards
+  - Only 1 adult
+  - No children
 """
 
 import sys, os, re, spacy
@@ -40,294 +40,292 @@ arrival_terms = get_prepositions("arrival")
 
 
 def setup() -> None:
-    add_stations_to_vocab()
-    add_to_vocabulary(get_dates())
-    add_series_entity_ruler()
-    add_station_entity_ruler()
-    add_matcher_patterns()
+  add_stations_to_vocab()
+  add_to_vocabulary(get_dates())
+  add_series_entity_ruler()
+  add_station_entity_ruler()
+  add_matcher_patterns()
 
 
 def add_stations_to_vocab() -> None:
-    """
-    Add station names to the spaCy vocabulary for spell checking.
-    :return: None
-    """
-    stations_list = [station.lower() for station in station_codes.keys()]
-    station_words = {token for station in stations_list for token in station.split()}
-    add_to_vocabulary(station_words)
-    add_to_vocabulary(stations_list)
+  """
+  Add station names to the spaCy vocabulary for spell checking.
+  :return: None
+  """
+  stations_list = [station.lower() for station in station_codes.keys()]
+  station_words = {token for station in stations_list for token in station.split()}
+  add_to_vocabulary(station_words)
+  add_to_vocabulary(stations_list)
 
 
 def add_station_entity_ruler() -> None:
-    """
-    Add a custom entity ruler to the spaCy pipeline for station names.
-    :return: None
-    """
-    ruler = nlp.add_pipe(
-        "entity_ruler",
-        config={"overwrite_ents": True},
-        name="station_ruler",
-        after="ner",
-    )
+  """
+  Add a custom entity ruler to the spaCy pipeline for station names.
+  :return: None
+  """
+  ruler = nlp.add_pipe(
+    "entity_ruler",
+    config={"overwrite_ents": True},
+    name="station_ruler",
+    after="ner",
+  )
 
+  stations = [station.upper() for station in station_codes.keys()]
+  places = {processed for station in stations for processed in process_station_name(station)}
 
-    stations = [station.upper() for station in station_codes.keys()]
-    places = {processed for station in stations for processed in process_station_name(station)}
+  # Remove any overlapping names
+  places = set(places) - set(stations)
 
-    # Remove any overlapping names
-    places = set(places) - set(stations)
+  station_patterns = [{"label": "STATION", "pattern": station} for station in stations]
+  place_patterns = [{"label": "PLACE", "pattern": place} for place in places]
 
-    station_patterns = [{"label": "STATION", "pattern": station} for station in stations]
-    place_patterns = [{"label": "PLACE", "pattern": place} for place in places]
-
-    ruler.add_patterns(station_patterns)
-    ruler.add_patterns(place_patterns)
+  ruler.add_patterns(station_patterns)
+  ruler.add_patterns(place_patterns)
 
 
 def add_series_entity_ruler() -> None:
-    """
-    Add a custom entity ruler to the spaCy pipeline for series names.
-    :return: None
-    """
-    ruler = nlp.add_pipe("entity_ruler", name="series_ruler", before="ner")
-    series_pattern = [{"label": "SERIES", "pattern": get_next_series_patterns()}]
-    ruler.add_patterns(series_pattern)
+  """
+  Add a custom entity ruler to the spaCy pipeline for series names.
+  :return: None
+  """
+  ruler = nlp.add_pipe("entity_ruler", name="series_ruler", before="ner")
+  series_pattern = [{"label": "SERIES", "pattern": get_next_series_patterns()}]
+  ruler.add_patterns(series_pattern)
 
-    ruler = nlp.add_pipe("entity_ruler", name="month_ruler", after="ner")
-    month_pattern = [{"label": "MONTH", "pattern": get_month_patterns()}]
-    ruler.add_patterns(month_pattern)
+  ruler = nlp.add_pipe("entity_ruler", name="month_ruler", after="ner")
+  month_pattern = [{"label": "MONTH", "pattern": get_month_patterns()}]
+  ruler.add_patterns(month_pattern)
 
 
 def add_matcher_patterns() -> None:
-    """
-    Add custom patterns to the spaCy matcher for train routes.
-    This includes departure and arrival patterns.
-    The patterns are defined in the knowledge base.
-    :return: None
-    """
-    global constraint_matcher, preposition_matcher, return_matcher
+  """
+  Add custom patterns to the spaCy matcher for train routes.
+  This includes departure and arrival patterns.
+  The patterns are defined in the knowledge base.
+  :return: None
+  """
+  global constraint_matcher, preposition_matcher, return_matcher
 
-    constraint_matcher = Matcher(nlp.vocab)
-    preposition_matcher = Matcher(nlp.vocab)
-    return_matcher = Matcher(nlp.vocab)
+  constraint_matcher = Matcher(nlp.vocab)
+  preposition_matcher = Matcher(nlp.vocab)
+  return_matcher = Matcher(nlp.vocab)
 
-    preposition_matcher.add("PREPOSITIONS", get_extraction_patterns(), greedy="LONGEST")
-    constraint_matcher.add("GENERAL", [get_default_time_constraint()], greedy="LONGEST")
-    constraint_matcher.add("DEPARTING", get_depart_after_patterns(), greedy="LONGEST")
-    constraint_matcher.add("ARRIVING", get_arrive_before_patterns(), greedy="LONGEST")
-    return_matcher.add("RETURN", get_return_patterns(), greedy="LONGEST")
+  preposition_matcher.add("PREPOSITIONS", get_extraction_patterns(), greedy="LONGEST")
+  constraint_matcher.add("GENERAL", [get_default_time_constraint()], greedy="LONGEST")
+  constraint_matcher.add("DEPARTING", get_depart_after_patterns(), greedy="LONGEST")
+  constraint_matcher.add("ARRIVING", get_arrive_before_patterns(), greedy="LONGEST")
+  return_matcher.add("RETURN", get_return_patterns(), greedy="LONGEST")
 
 
 def extract_date_and_time(text: str) -> dict:
-    """
-    Extract date and time from the text using spaCy's NER.
-    :param text: The input text to search for date and time.
-    :return: A dictionary containing date and time.
-    """
+  """
+  Extract date and time from the text using spaCy's NER.
+  :param text: The input text to search for date and time.
+  :return: A dictionary containing date and time.
+  """
 
-    # Get the entities from the text
-    doc = nlp(text)
+  # Get the entities from the text
+  doc = nlp(text)
 
-    # Ignore if no entities are found
-    if not doc.ents:
-        return None
+  # Ignore if no entities are found
+  if not doc.ents:
+    return None
 
-    journey = {"DATE": [], "TIME": []}
+  journey = {"DATE": [], "TIME": []}
 
-    for ent in doc.ents:
-        if ent.label_ in TIME_ENTITIES:
-            journey["DATE" if ent.label_ != "TIME" else "TIME"].append(ent.text)
+  for ent in doc.ents:
+    if ent.label_ in TIME_ENTITIES:
+      journey["DATE" if ent.label_ != "TIME" else "TIME"].append(ent.text)
 
-    return journey
+  return journey
 
 
 def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
-    doc = nlp(text)
-    matches = constraint_matcher(doc)
-    
-    for match_id, start, end in matches:
-        span = doc[start:end]
-        if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS:
-            return nlp.vocab.strings[match_id]
+  doc = nlp(text)
+  matches = constraint_matcher(doc)
 
-    # Check for matches
-    if not matches:
-        return None
+  for match_id, start, end in matches:
+    span = doc[start:end]
+    if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS:
+      return nlp.vocab.strings[match_id]
 
-    # If the departing station is found in the text, return "DEPART"
-    if departure is not None and departure in text:
-        return "DEPART"
+  # Check for matches
+  if not matches:
+    return None
 
-    # If the arrival station is found in the text, return "ARRIVE"
-    if arrival is not None and arrival in text:
-        return "ARRIVE"
-
+  # If the departing station is found in the text, return "DEPART"
+  if departure is not None and departure in text:
     return "DEPART"
+
+  # If the arrival station is found in the text, return "ARRIVE"
+  if arrival is not None and arrival in text:
+    return "ARRIVE"
+
+  return "DEPART"
 
 
 def find_closest_stations(query: str) -> list:
-    """
-    Suggest the closest matching station names based on the query.
-    :param query: The input query string
-    :return: A list of similar station names
-    """
-    station_names = [station.lower() for station in station_codes.keys()]
-    similar_stations = process.extract(query.lower(), station_names, limit=3)
-    # Return only the station names
-    return [station[0] for station in similar_stations]
+  """
+  Suggest the closest matching station names based on the query.
+  :param query: The input query string
+  :return: A list of similar station names
+  """
+  station_names = [station.lower() for station in station_codes.keys()]
+  similar_stations = process.extract(query.lower(), station_names, limit=3)
+  # Return only the station names
+  return [station[0] for station in similar_stations]
 
 
 def extract_station(type: str, text: str, terms: list) -> str:
-    """
-    Extract the station name from the text using regex.
-    :param type: The type of station (departure or arrival).
-    :param text: The input text to search for the station name.
-    :param terms: The list of terms to search for.
-    :return: The extracted station name or None if not found.
-    """
-    # Return station name if already found
-    if not (type is None):
-        return type
+  """
+  Extract the station name from the text using regex.
+  :param type: The type of station (departure or arrival).
+  :param text: The input text to search for the station name.
+  :param terms: The list of terms to search for.
+  :return: The extracted station name or None if not found.
+  """
+  # Return station name if already found
+  if not (type is None):
+    return type
 
-    for term in terms:
-        match = re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE)
-        if match:
-            return re.sub(rf"\b{re.escape(term)}\b", "", text, count=1, flags=re.IGNORECASE).strip()
-    return None
+  for term in terms:
+    match = re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE)
+    if match:
+      return re.sub(rf"\b{re.escape(term)}\b", "", text, count=1, flags=re.IGNORECASE).strip()
+  return None
 
 
 def get_time_constraints(text: str, return_variations: list, departure: str, arrival: str) -> str:
-    """
-    Extract the time from the text using regex.
-    :param text: The input text to search for time.
-    :return: The extracted time or None if not found.
-    """
+  """
+  Extract the time from the text using regex.
+  :param text: The input text to search for time.
+  :return: The extracted time or None if not found.
+  """
 
-    # Sanitse text for processing
-    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
+  # Sanitse text for processing
+  text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
 
-    # Split the text by its return variations
-    return_variations = [variation.lower() for variation in return_variations]
-    split_text = (
-        split_by_return_variations(text, return_variations)
-        if return_variations
-        else [text]
-    )
+  # Split the text by its return variations
+  return_variations = [variation.lower() for variation in return_variations]
+  split_text = (
+    split_by_return_variations(text, return_variations)
+    if return_variations
+    else [text]
+  )
 
-    # Loop through the split text and extract time constraints
-    constraints = [extract_time_constraints(segment, departure, arrival) for segment in split_text]
-    constraints = [c for c in constraints if c is not None]
+  # Loop through the split text and extract time constraints
+  constraints = [extract_time_constraints(segment, departure, arrival) for segment in split_text]
+  constraints = [c for c in constraints if c is not None]
 
-    # Ensure there are either 1 or 2 constraints, depending on if it is a return journey
-    amount = 2 if len(return_variations) > 0 else 1
-    constraints = constraints[:amount]
-    constraints += ["DEPART"] * (amount - len(constraints))
+  # Ensure there are either 1 or 2 constraints, depending on if it is a return journey
+  amount = 2 if len(return_variations) > 0 else 1
+  constraints = constraints[:amount]
+  constraints += ["DEPART"] * (amount - len(constraints))
 
-    return constraints
+  return constraints
 
 
 def get_journey_times(text: str, return_variations: list, departure: str, arrival: str) -> tuple:
-    """
-    Extract date and time from the text using regex.
-    :param text: The input text to search for date and time.
-    :param return_variations: List of return ticket variations.
-    :return: A tuple containing date and time for first and second journeys.
-    """
+  """
+  Extract date and time from the text using regex.
+  :param text: The input text to search for date and time.
+  :param return_variations: List of return ticket variations.
+  :return: A tuple containing date and time for first and second journeys.
+  """
 
-    # Preprocess the input text
-    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
+  # Preprocess the input text
+  text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
 
+  # Get the listed return variations and split the text by them
+  return_variations = [variation.lower() for variation in return_variations]
+  split_text = (
+    split_by_return_variations(text, return_variations)
+    if return_variations
+    else [text]
+  )
 
-    # Get the listed return variations and split the text by them
-    return_variations = [variation.lower() for variation in return_variations]
-    split_text = (
-        split_by_return_variations(text, return_variations)
-        if return_variations
-        else [text]
-    )
+  journeys = []
 
-    journeys = []
+  # Loop through the split text and extract date and time
+  for segment in split_text:
+    if journey := extract_date_and_time(segment):
+      journeys.append(journey)
 
-    # Loop through the split text and extract date and time
-    for segment in split_text:
-        if journey := extract_date_and_time(segment):
-            journeys.append(journey)
-
-    return journeys[0] if journeys else None, journeys[1] if len(journeys) > 1 else None
+  return journeys[0] if journeys else None, journeys[1] if len(journeys) > 1 else None
 
 
 def get_station_data(text: str) -> tuple:
-    """
-    Extract train information from the user input using spaCy's matcher.
-    :param user_input: The input text from the user.
-    :return: A tuple containing the departure and arrival stations and similar stations.
-    """
+  """
+  Extract train information from the user input using spaCy's matcher.
+  :param user_input: The input text from the user.
+  :return: A tuple containing the departure and arrival stations and similar stations.
+  """
 
-    # Preprocess the input text
-    text = preprocess_text(text)
-    doc = nlp(text)
+  # Preprocess the input text
+  text = preprocess_text(text)
+  doc = nlp(text)
 
-    # Modify the text, based off the tense of the text and re-process
-    text = modify_tenses(doc)
-    doc = nlp(text)
+  # Modify the text, based off the tense of the text and re-process
+  text = modify_tenses(doc)
+  doc = nlp(text)
 
-    # Apply the matcher to the document
-    matches = preposition_matcher(doc)
-    departure = None
-    arrival = None
+  # Apply the matcher to the document
+  matches = preposition_matcher(doc)
+  departure = None
+  arrival = None
 
-    for _, start, end in matches:
-        span = doc[start:end]
-        departure = extract_station(departure, span.text.lower(), departure_terms)
-        arrival = extract_station(arrival, span.text.lower(), arrival_terms)
+  for _, start, end in matches:
+    span = doc[start:end]
+    departure = extract_station(departure, span.text.lower(), departure_terms)
+    arrival = extract_station(arrival, span.text.lower(), arrival_terms)
 
-    similar_stations = []
+  similar_stations = []
 
-    for ent in doc.ents:
-        if not (departure is None or arrival is None):
-            continue
-        if not ent.label_ == "PLACE":
-            continue
-        similar_stations.append(find_closest_stations(ent.text))
+  for ent in doc.ents:
+    if not (departure is None or arrival is None):
+      continue
+    if not ent.label_ == "PLACE":
+      continue
+    similar_stations.append(find_closest_stations(ent.text))
 
-    return departure, arrival, similar_stations
+  return departure, arrival, similar_stations
 
 
 def get_return_ticket(text: str) -> list:
-    """
-    Extract if the user is looking for a return ticket.
-    :param text: The input text to search for return ticket.
-    :return: True if a return ticket is found, False otherwise.
-    """
-    # Preprocess + Spell Check
-    text = preprocess_text(text)
-    doc = nlp(text)
+  """
+  Extract if the user is looking for a return ticket.
+  :param text: The input text to search for return ticket.
+  :return: True if a return ticket is found, False otherwise.
+  """
+  # Preprocess + Spell Check
+  text = preprocess_text(text)
+  doc = nlp(text)
 
-    text = lemmatize_text(doc).upper()
-    doc = nlp(text)
+  text = lemmatize_text(doc).upper()
+  doc = nlp(text)
 
-    matches = return_matcher(doc)
-    return [doc[start:end].text for _, start, end in matches]
+  matches = return_matcher(doc)
+  return [doc[start:end].text for _, start, end in matches]
 
 
 setup()
 
 
 if __name__ == "__main__":
-    print("Pisces: Hello There, I am Pisces, your travel assistant. How can I help you today?")
-    print("--" * 30)
+  print("Pisces: Hello There, I am Pisces, your travel assistant. How can I help you today?")
+  print("--" * 30)
 
-    while True:
-        user_input = input("You: ")
-        return_phrases = get_return_ticket(user_input)
-        departure, arrival, similar_stations = get_station_data(user_input)
-        outbound, inbound = get_journey_times(user_input, return_phrases, departure, arrival)
-        time_constraints = get_time_constraints(user_input, return_phrases, departure, arrival)
-        print(f"Return Phrases: {return_phrases}")
-        print(f"Departure: {departure}")
-        print(f"Arrival: {arrival}")
-        print(f"Similar Stations: {similar_stations}")
-        print(f"Outbound: {outbound}")
-        print(f"Inbound: {inbound}")
-        print(f"Time Constraints: {time_constraints}")
-        print("--" * 30)
+  while True:
+    user_input = input("You: ")
+    return_phrases = get_return_ticket(user_input)
+    departure, arrival, similar_stations = get_station_data(user_input)
+    outbound, inbound = get_journey_times(user_input, return_phrases, departure, arrival)
+    time_constraints = get_time_constraints(user_input, return_phrases, departure, arrival)
+    print(f"Return Phrases: {return_phrases}")
+    print(f"Departure: {departure}")
+    print(f"Arrival: {arrival}")
+    print(f"Similar Stations: {similar_stations}")
+    print(f"Outbound: {outbound}")
+    print(f"Inbound: {inbound}")
+    print(f"Time Constraints: {time_constraints}")
+    print("--" * 30)
