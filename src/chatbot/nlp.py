@@ -8,7 +8,7 @@
 
 ## Assumptions and Limitations
 
-### NOTE Limitation of `extract_journey_times`
+### NOTE Limitation of `get_journey_times`
     - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
         - This won't work if the user only enters the date and time for the return journey
     - This assumes the date and time for the to and return journeys are in the same split
@@ -122,18 +122,6 @@ def add_matcher_patterns() -> None:
     return_matcher.add("RETURN", get_return_patterns(), greedy="LONGEST")
 
 
-def find_closest_stations(query: str) -> list:
-    """
-    Suggest the closest matching station names based on the query.
-    :param query: The input query string
-    :return: A list of similar station names
-    """
-    station_names = [station.lower() for station in station_codes.keys()]
-    similar_stations = process.extract(query.lower(), station_names, limit=3)
-    # Return only the station names
-    return [station[0] for station in similar_stations]
-
-
 def extract_date_and_time(text: str) -> dict:
     """
     Extract date and time from the text using spaCy's NER.
@@ -157,7 +145,89 @@ def extract_date_and_time(text: str) -> dict:
     return journey
 
 
-def extract_journey_times(text: str, return_variations: list) -> tuple:
+def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
+    doc = nlp(text)
+    matches = constraint_matcher(doc)
+
+    for match_id, _, _ in matches:
+        if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS:
+            return nlp.vocab.strings[match_id]
+
+    # Check for matches
+    if not matches:
+        return None
+
+    # If the departing station is found in the text, return "DEPART"
+    if departure is not None and departure in text:
+        return "DEPART"
+
+    # If the arrival station is found in the text, return "ARRIVE"
+    if arrival is not None and arrival in text:
+        return "ARRIVE"
+
+    return "DEPART"
+
+
+def find_closest_stations(query: str) -> list:
+    """
+    Suggest the closest matching station names based on the query.
+    :param query: The input query string
+    :return: A list of similar station names
+    """
+    station_names = [station.lower() for station in station_codes.keys()]
+    similar_stations = process.extract(query.lower(), station_names, limit=3)
+    # Return only the station names
+    return [station[0] for station in similar_stations]
+
+
+def extract_station(type: str, text: str, terms: list) -> str:
+    """
+    Extract the station name from the text using regex.
+    :param type: The type of station (departure or arrival).
+    :param text: The input text to search for the station name.
+    :param terms: The list of terms to search for.
+    :return: The extracted station name or None if not found.
+    """
+    # Return station name if already found
+    if not (type is None):
+        return type
+
+    for term in terms:
+        match = re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE)
+        if match:
+            return re.sub(rf"\b{re.escape(term)}\b", "", text, count=1, flags=re.IGNORECASE).strip()
+    return None
+
+
+def get_time_constraints(text: str, return_variations: list, departure: str, arrival: str) -> str:
+    """
+    Extract the time from the text using regex.
+    :param text: The input text to search for time.
+    :return: The extracted time or None if not found.
+    """
+
+    # Sanitse text for processing
+    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
+
+    # Split the text by its return variations
+    return_variations = [variation.lower() for variation in return_variations]
+    split_text = (
+        split_by_return_variations(text, return_variations)
+        if return_variations
+        else [text]
+    )
+
+    # Loop through the split text and extract time constraints
+    constraints = [
+        extract_time_constraints(segment, departure, arrival)
+        for segment in split_text
+        if extract_time_constraints(segment, departure, arrival) is not None
+    ]
+
+    return constraints
+
+
+def get_journey_times(text: str, return_variations: list) -> tuple:
     """
     Extract date and time from the text using regex.
     :param text: The input text to search for date and time.
@@ -186,27 +256,7 @@ def extract_journey_times(text: str, return_variations: list) -> tuple:
     return journeys[0] if journeys else None, journeys[1] if len(journeys) > 1 else None
 
 
-def extract_station(type: str, text: str, terms: list) -> str:
-    """
-    Extract the station name from the text using regex.
-    :param type: The type of station (departure or arrival).
-    :param text: The input text to search for the station name.
-    :param terms: The list of terms to search for.
-    :return: The extracted station name or None if not found.
-    """
-    # Return station name if already found
-    if not (type is None):
-        return type
-
-    for term in terms:
-        match = re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE)
-        if match:
-            return re.sub(
-                rf"\b{re.escape(term)}\b", "", text, count=1, flags=re.IGNORECASE
-            ).strip()
-
-
-def extract_train_info(text: str) -> tuple:
+def get_station_data(text: str) -> tuple:
     """
     Extract train information from the user input using spaCy's matcher.
     :param user_input: The input text from the user.
@@ -243,60 +293,7 @@ def extract_train_info(text: str) -> tuple:
     return departure, arrival, similar_stations
 
 
-def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
-    doc = nlp(text)
-    matches = constraint_matcher(doc)
-
-    for match_id, _, _ in matches:
-        if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS:
-            return nlp.vocab.strings[match_id]
-
-    # Check for matches
-    if not matches:
-        return None
-
-    # If the departing station is found in the text, return "DEPART"
-    if departure is not None and departure in text:
-        return "DEPART"
-
-    # If the arrival station is found in the text, return "ARRIVE"
-    if arrival is not None and arrival in text:
-        return "ARRIVE"
-
-    return "DEPART"
-
-
-def extract_journey_constraints(
-    text: str, return_variations: list, departure: str, arrival: str
-) -> str:
-    """
-    Extract the time from the text using regex.
-    :param text: The input text to search for time.
-    :return: The extracted time or None if not found.
-    """
-
-    # Sanitse text for processing
-    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
-
-    # Split the text by its return variations
-    return_variations = [variation.lower() for variation in return_variations]
-    split_text = (
-        split_by_return_variations(text, return_variations)
-        if return_variations
-        else [text]
-    )
-
-    # Loop through the split text and extract time constraints
-    constraints = [
-        extract_time_constraints(segment, departure, arrival)
-        for segment in split_text
-        if extract_time_constraints(segment, departure, arrival) is not None
-    ]
-
-    return constraints
-
-
-def extract_return_ticket(text: str) -> list:
+def get_return_ticket(text: str) -> list:
     """
     Extract if the user is looking for a return ticket.
     :param text: The input text to search for return ticket.
@@ -317,19 +314,15 @@ setup()
 
 
 if __name__ == "__main__":
-    print(
-        "Pisces: Hello There, I am Pisces, your travel assistant. How can I help you today?"
-    )
+    print("Pisces: Hello There, I am Pisces, your travel assistant. How can I help you today?")
     print("--" * 30)
 
     while True:
         user_input = input("You: ")
-        return_phrases = extract_return_ticket(user_input)
-        departure, arrival, similar_stations = extract_train_info(user_input)
-        outbound, inbound = extract_journey_times(user_input, return_phrases)
-        time_constraints = extract_journey_constraints(
-            user_input, return_phrases, departure, arrival
-        )
+        return_phrases = get_return_ticket(user_input)
+        departure, arrival, similar_stations = get_station_data(user_input)
+        outbound, inbound = get_journey_times(user_input, return_phrases,)
+        time_constraints = get_time_constraints(user_input, return_phrases, departure, arrival)
         print(f"Return Phrases: {return_phrases}")
         print(f"Departure: {departure}")
         print(f"Arrival: {arrival}")
