@@ -82,7 +82,7 @@ def get_prepositions(term: str) -> dict[str, list]:
     :param term: The term to get prepositions for.
     :return: A dictionary of prepositions for the term.
     '''
-    return extraction_patterns["synonyms"][term]
+    return extraction_patterns["words"]["synonyms"][term]
 
 
 def get_extraction_patterns() -> list[list]:
@@ -95,10 +95,10 @@ def get_extraction_patterns() -> list[list]:
     
     for station_bound in ["departure", "arrival"]:
         pattern = []
-        synonyms = extraction_patterns["synonyms"][station_bound]
+        synonyms = extraction_patterns["words"]["synonyms"][station_bound]
         synonyms_pattern = get_pattern_array(synonyms)
         pattern.append(synonyms_pattern)
-        pattern.append(extraction_patterns["station_prepositions"][0])
+        pattern.append(extraction_patterns["patterns"]["station_prepositions"][0])
         all_patterns.append(pattern)
     return all_patterns
 
@@ -108,8 +108,8 @@ def get_next_series_patterns() -> list[list]:
     Get all next series patterns.
     :return: A list of all next series patterns.
     '''
-    patterns = extraction_patterns["next_series"]
-    time_series = extraction_patterns["synonyms"]["time"]
+    patterns = extraction_patterns["patterns"]["next_series"]
+    time_series = extraction_patterns["words"]["synonyms"]["time"]
     time_series_pattern = get_pattern_array(time_series)
     patterns.append(time_series_pattern)
     return patterns
@@ -120,16 +120,24 @@ def get_month_patterns() -> list[list]:
     Get all month patterns.
     :return: A list of all month patterns.
     '''
-    return [get_pattern_array(extraction_patterns["synonyms"]["months"])]
+    return [get_pattern_array(extraction_patterns["words"]["synonyms"]["months"])]
+
+
+def get_dates() -> list:
+    return extraction_patterns["words"]["dates"]
+
+
+def get_default_time_constraint() -> list:
+    return extraction_patterns["patterns"]["time_constraint_default"]
 
 
 def get_time_constraint_patterns(synonyms_name: str) -> list[list]:
     patterns = []
-    synonyms = extraction_patterns["synonyms"][synonyms_name]
+    synonyms = extraction_patterns["words"]["synonyms"][synonyms_name]
     synonyms_pattern = get_pattern_array(synonyms)
     
-    default_pattern = extraction_patterns["time_constraint_default"][0]
-    location_patterns = extraction_patterns["time_constraint_locations"]
+    default_pattern = extraction_patterns["patterns"]["time_constraint_default"][0]
+    location_patterns = extraction_patterns["patterns"]["time_constraint_locations"]
     
     place_pattern = [synonyms_pattern, location_patterns[0], default_pattern]
     general_pattern = [synonyms_pattern, location_patterns[1], default_pattern]
@@ -161,7 +169,7 @@ def get_return_patterns() -> list[list]:
     Get all return patterns.
     :return: A list of all return patterns.
     '''
-    return [[get_pattern_array(extraction_patterns["synonyms"]["return"])]]
+    return [[get_pattern_array(extraction_patterns["words"]["synonyms"]["return"])]]
 
 
 def get_pattern_array(arr: list) -> dict:
@@ -171,6 +179,7 @@ def get_pattern_array(arr: list) -> dict:
     :return: The pattern array.
     ''' 
     return {"LOWER": {"in": arr}}
+
 
 
 station_codes = load_station_codes()

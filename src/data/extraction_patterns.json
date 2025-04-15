@@ -1,43 +1,21 @@
 {
-    "station_prepositions": [
-        {"ENT_TYPE": "STATION", "OP": "+"}
-    ],
-    "next_series": [
-        {"LOWER": "next"}
-    ],
-    "synonyms": {
-        "arrival": [
-            "to", "towards", "for", "at"
-        ],
-        "departure": [
-            "from", "of", "leave", "depart", "in"
-        ],
-        "depart": [
-            "depart", "leave", "exit", "to", "from", "in"
-        ],
-        "arrive": [
-            "arrive", "to", "in", "at", "reach", "get", "over", "be"
-        ],
-        "return": [
-            "return", "back", "trip", "roundtrip", "both", "inbound", "comeback"
-        ],
-        "months": [
-            "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"
-        ],
-        "time": ["hour", "week", "day", "month"]
+    "words": {
+        "synonyms": {
+            "departure": ["from", "of", "leave", "depart", "in"],
+            "arrival": ["to", "towards", "for", "at", "reach"],
+            "return": ["return", "back", "trip", "roundtrip", "both", "inbound", "comeback"],
+            "depart": ["depart", "leave", "exit", "to", "from", "in"],
+            "arrive": ["arrive", "to", "in", "at", "reach", "get", "over", "be"],
+            "months": ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"],
+            "time": ["hour", "week", "day", "month"]
+        },
+        "dates": ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th","11th", "12th", "13th", "14th", "15th", "16th", "17th", "18th", "19th", "20th", "21st", "22nd", "23rd", "24th", "25th", "26th", "27th", "28th", "29th", "30th", "31st"]
     },
-
-    "time_constraint_default": [
-        {"LOWER": {"in": ["at", "by", "after"]}},
-        {"ENT_TYPE": "TIME"}
-    ],
-
-    "time_constraint_locations": [
-        {"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE"]}, "OP": "+"},
-        {"LOWER": {"in": ["there"]}, "OP": "?"}
-    ],
-
-    "time_constraint_dates_date": [
-        {"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE", "DATE", "TIME"]}, "OP": "+"}
-    ]
+    "patterns": {
+        "station_prepositions": [{"ENT_TYPE": "STATION", "OP": "+"}],
+        "next_series": [{"LOWER": "next"}],
+        "time_constraint_default": [{"LOWER": {"in": ["at", "by", "after", "before"]}}, {"ENT_TYPE": "TIME"}],
+        "time_constraint_locations": [{"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE"]}, "OP": "+"}, {"LOWER": {"in": ["there"]}, "OP": "?"}],
+        "time_constraint_dates_date": [{"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE", "DATE", "TIME"]}, "OP": "+"}]
+    }
 }

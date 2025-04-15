@@ -20,6 +20,17 @@ def correct_spelling(word: str) -> str:
     return corrected_word if corrected_word else word
 
 
+def correct_sentence(sentence: str) -> str:
+    '''
+    Correct the spelling of a sentence using the spell checker.
+    :param sentence: The sentence to correct.
+    :return: The corrected sentence.
+    '''
+    words = sentence.split()
+    corrected_words = [correct_spelling(word) for word in words]
+    return " ".join(corrected_words)
+
+
 def lemmatize_text(doc: object) -> str:
     '''
     Lemmatize the input text using spaCy.
