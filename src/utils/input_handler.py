@@ -1,8 +1,11 @@
 import dateparser, re
 from spellchecker import SpellChecker
 from datetime import datetime
+from spacy.lang.en.stop_words import STOP_WORDS
+from nltk.corpus import stopwords
 
 spell = SpellChecker()
+merged_stopwords = set(STOP_WORDS).union(set(stopwords.words("english")))
 
 
 def add_to_vocabulary(words: list) -> None:
@@ -168,3 +171,16 @@ def split_by_return_variations(sentence: str, arr: list) -> list:
     split_sentence = re.split(pattern, sentence, flags=re.IGNORECASE)
     split_sentence = [s.strip() for s in split_sentence if s.strip()]
     return split_sentence
+
+
+def process_station_name(station_name: str) -> list:
+    """
+    Process the station name by removing special characters, numbers, and short words.
+    :param station_name: The input station name to process.
+    :return: The processed station name as a list of terms.
+    """
+    return [
+        re.sub(r"[^a-zA-Z]", "", preprocess_text(token))
+        for token in station_name.split()
+        if len(token) > 2 and token.lower() not in merged_stopwords
+    ]

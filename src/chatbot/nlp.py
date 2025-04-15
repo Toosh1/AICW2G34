@@ -4,19 +4,14 @@
 ## Checklist
 - Extract Date and Time [✔]
     - Get to_train date and time and return_train date and time […]
+    - TODO Assume Date = TODAY and Time = NOW for the outbound journey if not found
 - Departing After or Arriving Before [✔]
+    - Loop through return variations to find the split that separates the most date time entities evenly
 
-## Assumptions and Limitations
-
-### NOTE Limitation of `get_journey_times`
+## NOTE Limitation of `get_journey_times`
     - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
         - This won't work if the user only enters the date and time for the return journey
-    - This assumes the date and time for the to and return journeys are in the same split
-        - E.g. "I want a return ticket to norwich from maidstone east, i want to leave tomorrow and come back in 1 week"
-    - More complex vague sentences won't work
-        - E.g. "I want to leave tomorrow, come back on the 18th, and I want to go come back at 9am and 8pm respectively"
-
-### NOTE Current Assumptions
+## NOTE Current Assumptions
     - No railcards
     - Only 1 adult
     - No children
@@ -75,13 +70,14 @@ def add_station_entity_ruler() -> None:
         after="ner",
     )
 
-    # Remove any overlapping names
-    stations = [station.upper() for station in station_codes.keys()]
-    places = {station.split(" ")[0] for station in stations} - set(stations)
 
-    station_patterns = [
-        {"label": "STATION", "pattern": station} for station in stations
-    ]
+    stations = [station.upper() for station in station_codes.keys()]
+    places = {processed for station in stations for processed in process_station_name(station)}
+
+    # Remove any overlapping names
+    places = set(places) - set(stations)
+
+    station_patterns = [{"label": "STATION", "pattern": station} for station in stations]
     place_patterns = [{"label": "PLACE", "pattern": place} for place in places]
 
     ruler.add_patterns(station_patterns)
@@ -148,8 +144,9 @@ def extract_date_and_time(text: str) -> dict:
 def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
     doc = nlp(text)
     matches = constraint_matcher(doc)
-
-    for match_id, _, _ in matches:
+    
+    for match_id, start, end in matches:
+        span = doc[start:end]
         if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS:
             return nlp.vocab.strings[match_id]
 
@@ -218,16 +215,18 @@ def get_time_constraints(text: str, return_variations: list, departure: str, arr
     )
 
     # Loop through the split text and extract time constraints
-    constraints = [
-        extract_time_constraints(segment, departure, arrival)
-        for segment in split_text
-        if extract_time_constraints(segment, departure, arrival) is not None
-    ]
+    constraints = [extract_time_constraints(segment, departure, arrival) for segment in split_text]
+    constraints = [c for c in constraints if c is not None]
+
+    # Ensure there are either 1 or 2 constraints, depending on if it is a return journey
+    amount = 2 if len(return_variations) > 0 else 1
+    constraints = constraints[:amount]
+    constraints += ["DEPART"] * (amount - len(constraints))
 
     return constraints
 
 
-def get_journey_times(text: str, return_variations: list) -> tuple:
+def get_journey_times(text: str, return_variations: list, departure: str, arrival: str) -> tuple:
     """
     Extract date and time from the text using regex.
     :param text: The input text to search for date and time.
@@ -236,7 +235,8 @@ def get_journey_times(text: str, return_variations: list) -> tuple:
     """
 
     # Preprocess the input text
-    text = preprocess_time(text)
+    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
+
 
     # Get the listed return variations and split the text by them
     return_variations = [variation.lower() for variation in return_variations]
@@ -321,7 +321,7 @@ if __name__ == "__main__":
         user_input = input("You: ")
         return_phrases = get_return_ticket(user_input)
         departure, arrival, similar_stations = get_station_data(user_input)
-        outbound, inbound = get_journey_times(user_input, return_phrases,)
+        outbound, inbound = get_journey_times(user_input, return_phrases, departure, arrival)
         time_constraints = get_time_constraints(user_input, return_phrases, departure, arrival)
         print(f"Return Phrases: {return_phrases}")
         print(f"Departure: {departure}")

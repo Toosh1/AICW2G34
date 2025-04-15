@@ -1,7 +1,7 @@
 {
     "words": {
         "synonyms": {
-            "departure": ["from", "of", "leave", "depart", "in"],
+            "departure": ["from", "of", "leave", "depart", "in", "go"],
             "arrival": ["to", "towards", "for", "at", "reach"],
             "return": ["return", "back", "trip", "roundtrip", "both", "inbound", "comeback"],
             "depart": ["depart", "leave", "exit", "to", "from", "in"],
