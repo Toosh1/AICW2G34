@@ -5,12 +5,11 @@
 - Extract Date and Time [✔]
     - Get to_train date and time and return_train date and time […]
     - TODO Assume Date = TODAY and Time = NOW for the outbound journey if not found
-- Departing After or Arriving Before [✔]
-    - Loop through return variations to find the split that separates the most date time entities evenly
 
 ## NOTE Limitation of `get_journey_times`
     - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
         - This won't work if the user only enters the date and time for the return journey
+    - Potential TODO split by return, left of return = outbound, right of return = inbound?
 ## NOTE Current Assumptions
     - No railcards
     - Only 1 adult
@@ -72,13 +71,13 @@ def add_station_entity_ruler() -> None:
 
 
     stations = [station.upper() for station in station_codes.keys()]
-    places = {processed for station in stations for processed in process_station_name(station)}
+    places = {processed.upper() for station in stations for processed in process_station_name(station, nlp)}
 
     # Remove any overlapping names
-    places = set(places) - set(stations)
+    places = places.difference(stations)
 
-    station_patterns = [{"label": "STATION", "pattern": station} for station in stations]
-    place_patterns = [{"label": "PLACE", "pattern": place} for place in places]
+    station_patterns = [{"label": "STATION", "pattern": station.upper()} for station in stations]
+    place_patterns = [{"label": "PLACE", "pattern": place.upper()} for place in places]
 
     ruler.add_patterns(station_patterns)
     ruler.add_patterns(place_patterns)
@@ -155,11 +154,11 @@ def extract_date_and_time(text: str) -> dict:
 def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
     doc = nlp(text)
     matches = constraint_matcher(doc)
-    
-    for match_id, start, end in matches:
-        span = doc[start:end]
-        if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS:
-            return nlp.vocab.strings[match_id]
+
+    patterns = [nlp.vocab.strings[match_id] for match_id, _, _ in matches if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS]
+
+    if len(patterns) > 0:
+        return patterns
 
     # Check for matches
     if not matches:
@@ -167,13 +166,13 @@ def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
 
     # If the departing station is found in the text, return "DEPART"
     if departure is not None and departure in text:
-        return "DEPART"
+        return ["DEPARTING"]
 
     # If the arrival station is found in the text, return "ARRIVE"
     if arrival is not None and arrival in text:
-        return "ARRIVE"
+        return ["ARRIVING"]
 
-    return "DEPART"
+    return ["DEPARTING"]
 
 
 def find_closest_stations(query: str) -> list:
@@ -184,7 +183,6 @@ def find_closest_stations(query: str) -> list:
     """
     station_names = [station.lower() for station in station_codes.keys()]
     similar_stations = process.extract(query.lower(), station_names, limit=3)
-    # Return only the station names
     return [station[0] for station in similar_stations]
 
 
@@ -214,18 +212,17 @@ def get_time_constraints(text: str, return_phrase: str, departure: str, arrival:
     :return: The extracted time or None if not found.
     """
 
-    # Sanitse text for processing
-    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
     split_text = text.split(return_phrase) if return_phrase else [text]
 
     # Loop through the split text and extract time constraints
-    constraints = [extract_time_constraints(segment, departure, arrival) for segment in split_text]
+    constraints = []
+    for segment in split_text:
+        if constraint := extract_time_constraints(segment, departure, arrival):
+            constraints.extend(constraint)
     constraints = [c for c in constraints if c is not None]
 
-    # Ensure there are either 1 or 2 constraints, depending on if it is a return journey
-    amount = 2 if return_phrase else 1
-    constraints = constraints[:amount]
-    constraints += ["DEPART"] * (amount - len(constraints))
+    constraints.extend(["DEPARTING", "DEPARTING"])
+    constraints = constraints[:2]
 
     return constraints
 
@@ -238,10 +235,8 @@ def get_journey_times(text: str, return_phase: str, departure: str, arrival: str
     :return: A tuple containing date and time for first and second journeys.
     """
 
-    # Preprocess the input text
-    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
     split_text = text.split(return_phase) if return_phase else [text]
-    
+
     journeys = []
 
     # Loop through the split text and extract date and time
@@ -259,12 +254,10 @@ def get_station_data(text: str) -> tuple:
     :return: A tuple containing the departure and arrival stations and similar stations.
     """
 
-    # Preprocess the input text
-    text = preprocess_text(text)
     doc = nlp(text)
-
     # Modify the text, based off the tense of the text and re-process
     text = modify_tenses(doc)
+
     doc = nlp(text)
 
     # Apply the matcher to the document
@@ -284,7 +277,7 @@ def get_station_data(text: str) -> tuple:
             continue
         if not ent.label_ == "PLACE":
             continue
-        similar_stations.append(find_closest_stations(ent.text))
+        similar_stations.extend(find_closest_stations(ent.text))
 
     return departure, arrival, similar_stations
 
@@ -295,11 +288,8 @@ def get_return_ticket(text: str) -> str:
     :param text: The input text to search for return ticket.
     :return: True if a return ticket is found, False otherwise.
     """
-    
-    # Preprocess + Spell Check
-    text = lemmatize_text(nlp(correct_spelling(preprocess_time(text))))
+
     doc = nlp(text)
-    
     matches = return_matcher(doc)
     variations = [doc[start:end].text.lower() for _, start, end in matches]
     return extract_split_term(text, variations)
@@ -307,17 +297,17 @@ def get_return_ticket(text: str) -> str:
 
 setup()
 
-
 if __name__ == "__main__":
     print("Pisces: Hello There, I am Pisces, your travel assistant. How can I help you today?")
     print("--" * 30)
 
     while True:
         user_input = input("You: ")
-        return_phrase = get_return_ticket(user_input)
-        departure, arrival, similar_stations = get_station_data(user_input)
-        outbound, inbound = get_journey_times(user_input, return_phrase, departure, arrival)
-        time_constraints = get_time_constraints(user_input, return_phrase, departure, arrival)
+        processed_text = preprocess_text(user_input, nlp, True, True)
+        return_phrase = get_return_ticket(processed_text)
+        departure, arrival, similar_stations = get_station_data(processed_text.upper())
+        outbound, inbound = get_journey_times(processed_text, return_phrase, departure, arrival)
+        time_constraints = get_time_constraints(processed_text, return_phrase, departure, arrival)
         print(f"Return Phrases: {return_phrase}")
         print(f"Departure: {departure}")
         print(f"Arrival: {arrival}")

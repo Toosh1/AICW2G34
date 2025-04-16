@@ -4,7 +4,7 @@
             "departure": ["from", "of", "leave", "depart", "in", "go"],
             "arrival": ["to", "towards", "for", "at", "reach"],
             "return": ["return", "back", "trip", "roundtrip", "both", "inbound", "comeback"],
-            "depart": ["depart", "leave", "exit", "to", "from", "in"],
+            "depart": ["depart", "leave", "exit", "to", "from", "in", "return"],
             "arrive": ["arrive", "to", "in", "at", "reach", "get", "over", "be"],
             "months": ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"],
             "time": ["hour", "week", "day", "month"]
@@ -14,7 +14,9 @@
     "patterns": {
         "station_prepositions": [{"ENT_TYPE": "STATION", "OP": "+"}],
         "next_series": [{"LOWER": "next"}],
-        "time_constraint_default": [{"LOWER": {"in": ["at", "by", "after", "before"]}}, {"ENT_TYPE": "TIME"}],
+        "time_constraint_default": [{"LOWER": {"in": ["at", "by", "around"]}}, {"ENT_TYPE": "TIME"}],
+        "time_constraint_arrive": [{"LOWER": {"in": ["before"]}}, {"ENT_TYPE": "TIME"}],
+        "time_constraint_depart": [{"LOWER": {"in": ["after"]}}, {"ENT_TYPE": "TIME"}],
         "time_constraint_locations": [{"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE"]}, "OP": "+"}, {"LOWER": {"in": ["there"]}, "OP": "?"}],
         "time_constraint_dates_date": [{"ENT_TYPE": {"in": ["STATION", "PLACE", "GPE", "DATE", "TIME"]}, "OP": "+"}]
     }

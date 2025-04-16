@@ -165,7 +165,7 @@ def get_depart_after_patterns() -> list[list]:
     Get all departure patterns.
     :return: A list of all departure patterns.
     """
-    return get_time_constraint_patterns("depart")
+    return get_time_constraint_patterns("depart") + [extraction_patterns["patterns"]["time_constraint_depart"]]
 
 
 def get_arrive_before_patterns() -> list[list]:
@@ -173,7 +173,7 @@ def get_arrive_before_patterns() -> list[list]:
     Get all arrival patterns.
     :return: A list of all arrival patterns.
     """
-    return get_time_constraint_patterns("arrive")
+    return get_time_constraint_patterns("arrive") + [extraction_patterns["patterns"]["time_constraint_arrive"]]
 
 
 def get_return_patterns() -> list[list]:

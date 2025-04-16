@@ -66,27 +66,6 @@ def modify_tenses(doc: object) -> str:
     return " ".join(modified_tokens)
 
 
-def preprocess_text(text: str, spell_check: bool = True) -> str:
-    """
-    Preprocess the input text by normalizing it to lower case and removing special characters.
-    :param text: The input text to preprocess.
-    :return: The preprocessed text.
-    """
-    # Normalize input text to lower case and remove special characters
-    cleaned_text = re.sub(r"[^a-zA-Z0-9\s]", "", text)
-    cleaned_text = re.sub(r"\s+", " ", cleaned_text).strip()
-
-    tokens = cleaned_text.split()
-
-    # Loop through tokens and correct spelling
-    if spell_check:
-        tokens = [correct_spelling(token.lower()) for token in tokens]
-
-    text = " ".join(tokens).upper()
-
-    return text
-
-
 def add_leading_zero(match: re.Match) -> str:
     """
     Add leading zero to the hour in the time string.
@@ -126,7 +105,7 @@ def format_time(time_str: str) -> str:
     return time_str
 
 
-def preprocess_time(text: str) -> str:
+def preprocess_text(text: str, nlp: object, spell_check: bool = True, lemma: bool = False) -> str:
     """
     Preproces the input text for time, remove extra spaces and correct am/pm format.
     :param text: The input text to preprocess.
@@ -134,7 +113,18 @@ def preprocess_time(text: str) -> str:
     """
     cleaned_text = format_time(text)
 
-    return cleaned_text
+    # Remove all symbols except for colon and period and comma
+    cleaned_text = re.sub(r"[^a-zA-Z0-9\s:.,]", "", cleaned_text)
+    cleaned_text = re.sub(r"\s+", " ", cleaned_text).strip()
+
+    if spell_check:
+        cleaned_text = correct_sentence(cleaned_text)
+
+    if lemma:
+        doc = nlp(cleaned_text)
+        cleaned_text = lemmatize_text(doc)
+
+    return cleaned_text.lower()
 
 
 def parse_time(journey: dict[str, str]) -> str:
@@ -160,14 +150,14 @@ def parse_time(journey: dict[str, str]) -> str:
     return parsed_date.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def process_station_name(station_name: str) -> list:
+def process_station_name(station_name: str, nlp) -> list:
     """
     Process the station name by removing special characters, numbers, and short words.
     :param station_name: The input station name to process.
     :return: The processed station name as a list of terms.
     """
     return [
-        re.sub(r"[^a-zA-Z]", "", preprocess_text(token))
+        re.sub(r"[^a-zA-Z]", "", preprocess_text(token, nlp))
         for token in station_name.split()
         if len(token) > 2 and token.lower() not in merged_stopwords
     ]
