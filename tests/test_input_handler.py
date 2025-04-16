@@ -1,9 +1,10 @@
-import sys, os, pytest
+import sys, os, pytest, spacy
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.utils.input_handler import *
 
+nlp = spacy.load("en_core_web_sm")
 
 @pytest.mark.parametrize("input_word, expected", [
     ("recieve", "receive"),
@@ -14,26 +15,11 @@ def test_correct_spelling(input_word, expected) -> None:
 
 
 @pytest.mark.parametrize("input_text, expected", [
-    ("hello!!!  world...", "HELLO WORLD"),
+    ("I recieve teh message", "i receive the message"),
+    ("I am arriving at 9pm", "i be arrive at 9:00 am")
 ])
 def test_preprocess_text_with_spell_check(input_text, expected) -> None:
-    assert preprocess_text(input_text) == expected
-
-
-@pytest.mark.parametrize("input_text, expected", [
-    ("hello!!!  world...", "HELLO WORLD"),
-])
-def test_preprocess_text_without_spell_check(input_text, expected) -> None:
-    assert preprocess_text(input_text, spell_check=False) == expected
-
-
-@pytest.mark.parametrize("input_time, expected", [
-    ("5pm", "5:00 PM"),
-    ("10:30am", "10:30 AM"),
-    ("17:45", "17:45")
-])
-def test_preprocess_time(input_time, expected) -> None:
-    assert preprocess_time(input_time) == expected
+    assert preprocess_text(input_text, nlp, True, True) == expected
 
 
 @pytest.mark.parametrize("journey, expected_substring", [

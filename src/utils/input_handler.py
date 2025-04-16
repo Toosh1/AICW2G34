@@ -81,27 +81,22 @@ def format_time(time_str: str) -> str:
     :param time_str: The input time string.
     :return: The formatted time string.
     """
-
     # Regex pattern to find times like '1am', '1pm', etc and convert them to '01:00am', '01:00pm'
     pattern = r"\b(1[0-2]|[1-9])\s*(am|pm)\b"
     time_str = re.sub(pattern, add_leading_zero, time_str)
 
     # Regex to remove any space between the time and the 'AM/PM'
-    time_str = re.sub(
-        r"(\d{1,2}:\d{2})(am|pm)", r"\1 \2", time_str, flags=re.IGNORECASE
-    )
-
+    time_str = re.sub(r"(\d{1,2}:\d{2})(am|pm)", r"\1 \2", time_str, flags=re.IGNORECASE)
+    
     # Remove any 0s before the hour e.g 09:00am -> 9:00am
     time_str = re.sub(r"0(\d{1}:\d{2})", r"\1", time_str)
-
+    
     # Use upper() on any instances of "AM" or "PM"
-    time_str = re.sub(
-        r"(?<=\s)(am|pm)", lambda x: x.group(0).upper(), time_str, flags=re.IGNORECASE
-    )
-
+    time_str = re.sub(r"(?<=\s)(am|pm)", lambda x: x.group(0).upper(), time_str, flags=re.IGNORECASE)
+    
     # Remove any trailing zeros in the time string
     time_str = re.sub(r"(?<=\d{2}:\d{2}):00\b", "", time_str)
-
+    
     return time_str
 
 
@@ -112,7 +107,6 @@ def preprocess_text(text: str, nlp: object, spell_check: bool = True, lemma: boo
     :return: The preprocessed text.
     """
     cleaned_text = format_time(text)
-
     # Remove all symbols except for colon and period and comma
     cleaned_text = re.sub(r"[^a-zA-Z0-9\s:.,]", "", cleaned_text)
     cleaned_text = re.sub(r"\s+", " ", cleaned_text).strip()

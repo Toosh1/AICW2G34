@@ -212,6 +212,7 @@ def get_time_constraints(text: str, return_phrase: str, departure: str, arrival:
     :return: The extracted time or None if not found.
     """
 
+    text = preprocess_text(text, nlp, True, True)
     split_text = text.split(return_phrase) if return_phrase else [text]
 
     # Loop through the split text and extract time constraints
@@ -254,10 +255,12 @@ def get_station_data(text: str) -> tuple:
     :return: A tuple containing the departure and arrival stations and similar stations.
     """
 
+    text = preprocess_text(text, nlp, True, True)
+    text = preprocess_text(text, nlp, True, False).upper()
     doc = nlp(text)
+    
     # Modify the text, based off the tense of the text and re-process
     text = modify_tenses(doc)
-
     doc = nlp(text)
 
     # Apply the matcher to the document
@@ -271,7 +274,7 @@ def get_station_data(text: str) -> tuple:
         arrival = extract_station(arrival, span.text.lower(), arrival_terms)
 
     similar_stations = []
-
+    
     for ent in doc.ents:
         if not (departure is None or arrival is None):
             continue
@@ -289,6 +292,7 @@ def get_return_ticket(text: str) -> str:
     :return: True if a return ticket is found, False otherwise.
     """
 
+    text = preprocess_text(text, nlp, True, True)
     doc = nlp(text)
     matches = return_matcher(doc)
     variations = [doc[start:end].text.lower() for _, start, end in matches]
@@ -303,11 +307,10 @@ if __name__ == "__main__":
 
     while True:
         user_input = input("You: ")
-        processed_text = preprocess_text(user_input, nlp, True, True)
-        return_phrase = get_return_ticket(processed_text)
-        departure, arrival, similar_stations = get_station_data(processed_text.upper())
-        outbound, inbound = get_journey_times(processed_text, return_phrase, departure, arrival)
-        time_constraints = get_time_constraints(processed_text, return_phrase, departure, arrival)
+        return_phrase = get_return_ticket(user_input)
+        departure, arrival, similar_stations = get_station_data(user_input)
+        outbound, inbound = get_journey_times(user_input, return_phrase, departure, arrival)
+        time_constraints = get_time_constraints(user_input, return_phrase, departure, arrival)
         print(f"Return Phrases: {return_phrase}")
         print(f"Departure: {departure}")
         print(f"Arrival: {arrival}")
