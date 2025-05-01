@@ -4,33 +4,136 @@
             "hi",
             "hello",
             "hey",
-            "holla"
+            "holla",
+            "good morning",
+            "good evening",
+            "howdy",
+            "yo"
         ],
         "responses": [
             "Thanks for checking in.",
-            "Thank you for being there!"
+            "Thank you for being there!",
+            "Hello! How can I assist you today?"
         ]
     },
     "goodbye": {
         "patterns": [
             "bye",
-            "goodbye"
+            "goodbye",
+            "see you",
+            "take care",
+            "later",
+            "farewell"
         ],
         "responses": [
             "Have a nice time, bye.",
-            "Thank you for using this service. Goodbye"
+            "Thank you for using this service. Goodbye",
+            "See you later!"
         ]
     },
     "thanks": {
         "patterns": [
             "thanks",
-            "thank"
+            "thank you",
+            "thanks a lot",
+            "thank you so much",
+            "much appreciated"
         ],
         "responses": [
             "Happy to help!",
             "Any time!",
             "You're welcome",
-            "My pleasure"
+            "My pleasure",
+            "Glad I could assist!"
+        ]
+    },
+    "train_info": {
+        "patterns": [
+            "train",
+            "ticket",
+            "journey",
+            "travel",
+            "train schedule",
+            "departure times",
+            "train stations",
+            "train tickets",
+            "train fares",
+            "what time is the next train",
+            "is there a train to",
+            "book a train ticket"
+        ],
+        "responses": [
+            "I can help you with train ticket details. Where are you traveling from and to?",
+            "Let me assist you with train schedules. Please provide your departure and arrival locations.",
+            "What time are you planning to travel? I can help find the right train for you.",
+            "I can assist with train bookings. Where do you want to travel?"
+        ]
+    },
+    "train_booking": {
+        "patterns": [
+            "book a train ticket",
+            "how to book a train",
+            "reserve a train ticket",
+            "train booking",
+            "train reservation",
+            "how to get a ticket"
+        ],
+        "responses": [
+            "To book a train ticket, I can assist you in finding available trains. Where would you like to go?",
+            "I can guide you through booking your train tickets. Please tell me your departure and destination stations."
+        ]
+    },
+    "train_schedule": {
+        "patterns": [
+            "when is the next train",
+            "what time does the train leave",
+            "when does the train depart",
+            "train timetable",
+            "next train to",
+            "train departure time"
+        ],
+        "responses": [
+            "I can check the schedule for you. Where are you traveling from?",
+            "Please provide your departure station and destination, and I can give you the next train timings."
+        ]
+    },
+    "train_fare": {
+        "patterns": [
+            "train fare",
+            "how much is the train ticket",
+            "cost of train ticket",
+            "train price"
+        ],
+        "responses": [
+            "I can help you with the fare details. Could you tell me your travel route?",
+            "Train fares depend on the route. Where are you traveling from and to?"
+        ]
+    },
+    "train_arrival": {
+        "patterns": [
+            "when does the train arrive",
+            "train arrival time",
+            "arrival time for the train",
+            "what time will the train arrive"
+        ],
+        "responses": [
+            "Please provide the train and station details, and I'll help with the arrival time.",
+            "To check the arrival time, let me know your train number and station."
+        ]
+    },
+    "default": {
+        "patterns": [
+            "I am not sure what you mean",
+            "I don't understand",
+            "Can you rephrase that?",
+            "I didn't get that",
+            "could you explain that again?"
+        ],
+        "responses": [
+            "Sorry, I didn't get that.",
+            "Could you please clarify?",
+            "I'm not sure I understand.",
+            "Can you reword that?"
         ]
     }
 }
