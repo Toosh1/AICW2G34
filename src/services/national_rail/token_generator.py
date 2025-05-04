@@ -1,6 +1,3 @@
-# This code is made purely to get token from National Rail API. 
-# It is not used in the project directly.
-
 import requests
 import os
 import json

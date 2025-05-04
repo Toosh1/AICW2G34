@@ -3,7 +3,6 @@ from zeep import Client
 from dotenv import load_dotenv
 from collections import deque
 
-
 def setup_client():
     load_dotenv()
     API_KEY = os.getenv("OPENLDBWS_API_KEY")
@@ -12,7 +11,6 @@ def setup_client():
     header = {'AccessToken': {'TokenValue': API_KEY}}
     client.set_default_soapheaders(header)
     return client
-
 
 def get_direct_depature_board(client, from_station, to_station):
     try:
@@ -28,14 +26,12 @@ def get_direct_depature_board(client, from_station, to_station):
     except Exception as e:
         return None
 
-
 def get_departure_board(client, from_station):
     try:
         response = client.service.GetDepBoardWithDetails(numRows=10, crs=from_station,filterType="from")
         return response
     except Exception as e:
         return []
-
 
 def get_all_routes_from_station_bfs(client, start_station, depth=2):
     # Queue for BFS, stores tuples of (current_station, current_path, current_depth)
@@ -66,7 +62,6 @@ def get_all_routes_from_station_bfs(client, start_station, depth=2):
                     queue.append((station_code, new_path, current_depth + 1))  # Add the new station to the queue
 
     return routes
-
 
 if __name__ == "__main__":
     client = setup_client()
