@@ -9,7 +9,6 @@
 ## NOTE Limitation of `get_journey_times`
     - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
         - This won't work if the user only enters the date and time for the return journey
-    - Potential TODO split by return, left of return = outbound, right of return = inbound?
 ## NOTE Current Assumptions
     - No railcards
     - Only 1 adult
@@ -37,14 +36,12 @@ TIME_CONSTRAINTS = ["DEPARTING", "ARRIVING"]
 departure_terms = get_prepositions("departure")
 arrival_terms = get_prepositions("arrival")
 
-
 def setup() -> None:
     add_stations_to_vocab()
     add_to_vocabulary(get_dates())
     add_series_entity_ruler()
     add_station_entity_ruler()
     add_matcher_patterns()
-
 
 def add_stations_to_vocab() -> None:
     """
@@ -55,7 +52,6 @@ def add_stations_to_vocab() -> None:
     station_words = {token for station in stations_list for token in station.split()}
     add_to_vocabulary(station_words)
     add_to_vocabulary(stations_list)
-
 
 def add_station_entity_ruler() -> None:
     """
@@ -82,7 +78,6 @@ def add_station_entity_ruler() -> None:
     ruler.add_patterns(station_patterns)
     ruler.add_patterns(place_patterns)
 
-
 def add_series_entity_ruler() -> None:
     """
     Add a custom entity ruler to the spaCy pipeline for series names.
@@ -95,7 +90,6 @@ def add_series_entity_ruler() -> None:
     ruler = nlp.add_pipe("entity_ruler", name="month_ruler", after="ner")
     month_pattern = [{"label": "MONTH", "pattern": get_month_patterns()}]
     ruler.add_patterns(month_pattern)
-
 
 def add_matcher_patterns() -> None:
     """
@@ -116,7 +110,6 @@ def add_matcher_patterns() -> None:
     constraint_matcher.add("ARRIVING", get_arrive_before_patterns(), greedy="LONGEST")
     return_matcher.add("RETURN", get_return_patterns(), greedy="LONGEST")
 
-
 def extract_split_term(text: str, variations: list) -> str:
     return min(
         variations,
@@ -126,7 +119,6 @@ def extract_split_term(text: str, variations: list) -> str:
         ),
         default=None
     )
-
 
 def extract_date_and_time(text: str) -> dict:
     """
@@ -149,7 +141,6 @@ def extract_date_and_time(text: str) -> dict:
             journey["DATE" if ent.label_ != "TIME" else "TIME"].append(ent.text)
 
     return journey
-
 
 def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
     doc = nlp(text)
@@ -174,7 +165,6 @@ def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
 
     return ["DEPARTING"]
 
-
 def find_closest_stations(query: str) -> list:
     """
     Suggest the closest matching station names based on the query.
@@ -184,7 +174,6 @@ def find_closest_stations(query: str) -> list:
     station_names = [station.lower() for station in station_codes.keys()]
     similar_stations = process.extract(query.lower(), station_names, limit=3)
     return [station[0] for station in similar_stations]
-
 
 def extract_station(type: str, text: str, terms: list) -> str:
     """
@@ -203,7 +192,6 @@ def extract_station(type: str, text: str, terms: list) -> str:
         if match:
             return re.sub(rf"\b{re.escape(term)}\b", "", text, count=1, flags=re.IGNORECASE).strip()
     return None
-
 
 def get_time_constraints(text: str, return_phrase: str, departure: str, arrival: str) -> str:
     """
@@ -227,7 +215,6 @@ def get_time_constraints(text: str, return_phrase: str, departure: str, arrival:
 
     return constraints
 
-
 def get_journey_times(text: str, return_phase: str, departure: str, arrival: str) -> tuple:
     """
     Extract date and time from the text using regex.
@@ -246,7 +233,6 @@ def get_journey_times(text: str, return_phase: str, departure: str, arrival: str
             journeys.append(journey)
 
     return journeys[0] if journeys else None, journeys[1] if len(journeys) > 1 else None
-
 
 def get_station_data(text: str) -> tuple:
     """
@@ -284,7 +270,6 @@ def get_station_data(text: str) -> tuple:
 
     return departure, arrival, similar_stations
 
-
 def get_return_ticket(text: str) -> str:
     """
     Extract if the user is looking for a return ticket.
@@ -297,7 +282,6 @@ def get_return_ticket(text: str) -> str:
     matches = return_matcher(doc)
     variations = [doc[start:end].text.lower() for _, start, end in matches]
     return extract_split_term(text, variations)
-
 
 setup()
 

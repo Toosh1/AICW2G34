@@ -4,10 +4,9 @@ station_codes = {}
 responses = {}
 extraction_patterns = {}
 
-STATION_CODES_PATH = "./src/data/stations.csv"
-RESPONSES_PATH = "./src/data/intentions.json"
-EXTRACTION_PATH = "./src/data/extraction_patterns.json"
-
+STATION_CODES_PATH = "./src/data/csv/enhanced_stations.csv"
+RESPONSES_PATH = "./src/data/json/intentions.json"
+EXTRACTION_PATH = "./src/data/json/extraction_patterns.json"
 
 def load_station_codes() -> dict[str, str]:
     """
@@ -19,10 +18,9 @@ def load_station_codes() -> dict[str, str]:
         with open(STATION_CODES_PATH, mode="r") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                cleaned_name = get_processed_station_name(row["name"])
-                station_codes[cleaned_name] = row["crs"]
+                cleaned_name = get_processed_station_name(row["Station Name"])
+                station_codes[cleaned_name] = row["CRS Code"]
     return station_codes
-
 
 def load_responses() -> dict[str, str]:
     """
@@ -37,7 +35,6 @@ def load_responses() -> dict[str, str]:
                 responses[intent] = details
     return responses
 
-
 def load_patterns() -> dict[str, str]:
     """
     Load patterns from a JSON file into a dictionary.
@@ -51,7 +48,6 @@ def load_patterns() -> dict[str, str]:
                 extraction_patterns[intent] = details
     return extraction_patterns
 
-
 def get_processed_station_name(name: str) -> str:
     """
     Process the station name to ensure it is in the correct format.
@@ -64,7 +60,6 @@ def get_processed_station_name(name: str) -> str:
 
     return name.lower().strip()
 
-
 def get_station_code(station_name: str) -> str:
     """
     Get the station code for a given station name.
@@ -75,7 +70,6 @@ def get_station_code(station_name: str) -> str:
     station_name = station_name.lower().strip()
     return station_codes.get(station_name, None)
 
-
 def get_prepositions(term: str) -> dict[str, list]:
     """
     Get the prepositions for a given term.
@@ -83,7 +77,6 @@ def get_prepositions(term: str) -> dict[str, list]:
     :return: A dictionary of prepositions for the term.
     """
     return extraction_patterns["words"]["synonyms"][term]
-
 
 def get_extraction_patterns() -> list[list]:
     """
@@ -102,7 +95,6 @@ def get_extraction_patterns() -> list[list]:
         all_patterns.append(pattern)
     return all_patterns
 
-
 def get_next_series_patterns() -> list[list]:
     """
     Get all next series patterns.
@@ -114,14 +106,12 @@ def get_next_series_patterns() -> list[list]:
     patterns.append(time_series_pattern)
     return patterns
 
-
 def get_month_patterns() -> list[list]:
     """
     Get all month patterns.
     :return: A list of all month patterns.
     """
     return [get_pattern_array(extraction_patterns["words"]["synonyms"]["months"])]
-
 
 def get_dates() -> list:
     """
@@ -130,13 +120,11 @@ def get_dates() -> list:
     """
     return extraction_patterns["words"]["dates"]
 
-
 def get_default_time_constraint() -> list:
     """
     Get the default time constraint pattern.
     """
     return extraction_patterns["patterns"]["time_constraint_default"]
-
 
 def get_time_constraint_patterns(synonyms_name: str) -> list[list]:
     """
@@ -159,14 +147,12 @@ def get_time_constraint_patterns(synonyms_name: str) -> list[list]:
 
     return patterns
 
-
 def get_depart_after_patterns() -> list[list]:
     """
     Get all departure patterns.
     :return: A list of all departure patterns.
     """
     return get_time_constraint_patterns("depart") + [extraction_patterns["patterns"]["time_constraint_depart"]]
-
 
 def get_arrive_before_patterns() -> list[list]:
     """
@@ -175,14 +161,12 @@ def get_arrive_before_patterns() -> list[list]:
     """
     return get_time_constraint_patterns("arrive") + [extraction_patterns["patterns"]["time_constraint_arrive"]]
 
-
 def get_return_patterns() -> list[list]:
     """
     Get all return patterns.
     :return: A list of all return patterns.
     """
     return [[get_pattern_array(extraction_patterns["words"]["synonyms"]["return"])]]
-
 
 def get_pattern_array(arr: list) -> dict:
     """
@@ -191,7 +175,6 @@ def get_pattern_array(arr: list) -> dict:
     :return: The pattern array.
     """
     return {"LOWER": {"in": arr}}
-
 
 station_codes = load_station_codes()
 responses = load_responses()

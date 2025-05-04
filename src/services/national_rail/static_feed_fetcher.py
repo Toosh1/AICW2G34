@@ -2,7 +2,7 @@
 Extracts static data from the National Rail API and stores it in the src/data/fares directory.
 """
 
-import services.national_rail.token_generator as token_generator
+import token_generator
 import requests
 import zipfile
 import io
@@ -14,9 +14,13 @@ FARES_STORE = "src/data/fares/"
 ROUTING_URL = "https://opendata.nationalrail.co.uk/api/staticfeeds/2.0/routeing"
 ROUTING_STORE = "src/data/routeing/"
 
+STATIONS_URL = "https://opendata.nationalrail.co.uk/api/staticfeeds/4.0/stations"
+STATIONS_STORE = "src/data/stations/"
+
 # Ensure directories exist
 os.makedirs(FARES_STORE, exist_ok=True)
 os.makedirs(ROUTING_STORE, exist_ok=True)
+os.makedirs(STATIONS_STORE, exist_ok=True)
 
 def get_data(url):
     # Get authentication token
@@ -57,9 +61,7 @@ if __name__ == "__main__":
         extract_response_contents(data, ROUTING_STORE)
         print(f"Routing data extracted to {ROUTING_STORE}")
         
-    data = get_data(TOC_URL)
+    data = get_data(STATIONS_URL)
     if data is not None:
-        extract_response_contents(data, TOC_STORE)
-        print(f"TOC data extracted to {TOC_STORE}")
-    else:
-        print("Failed to retrieve TOC data.")
+        extract_response_contents(data, STATIONS_STORE)
+        print(f"Stations data extracted to {STATIONS_STORE}")
