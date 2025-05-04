@@ -1,26 +1,10 @@
-import csv, json
+import json
 
-station_codes = {}
 responses = {}
 extraction_patterns = {}
 
-STATION_CODES_PATH = "./src/data/csv/enhanced_stations.csv"
 RESPONSES_PATH = "./src/data/json/intentions.json"
 EXTRACTION_PATH = "./src/data/json/extraction_patterns.json"
-
-def load_station_codes() -> dict[str, str]:
-    """
-    Load station codes from a CSV file into a dictionary.
-    :return: A dictionary where the keys are station names and the values are their corresponding codes.
-    """
-    global station_codes
-    if not station_codes:
-        with open(STATION_CODES_PATH, mode="r") as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                cleaned_name = get_processed_station_name(row["Station Name"])
-                station_codes[cleaned_name] = row["CRS Code"]
-    return station_codes
 
 def load_responses() -> dict[str, str]:
     """
@@ -47,18 +31,6 @@ def load_patterns() -> dict[str, str]:
             for intent, details in data.items():
                 extraction_patterns[intent] = details
     return extraction_patterns
-
-def get_processed_station_name(name: str) -> str:
-    """
-    Process the station name to ensure it is in the correct format.
-    :param station_name: The name of the station.
-    :return: The processed station name.
-    """
-    name = name.replace(" Rail Station", "").strip()
-    name = name.replace("-", " ")
-    name = name.replace("(", "").replace(")", "")
-
-    return name.lower().strip()
 
 def get_station_code(station_name: str) -> str:
     """
@@ -176,6 +148,5 @@ def get_pattern_array(arr: list) -> dict:
     """
     return {"LOWER": {"in": arr}}
 
-station_codes = load_station_codes()
 responses = load_responses()
 extraction_patterns = load_patterns()

@@ -23,6 +23,7 @@ from rapidfuzz import process
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from chatbot.database import *
+from chatbot.knowledge_base import *
 from utils.input_handler import *
 
 # Load spaCy's English model
