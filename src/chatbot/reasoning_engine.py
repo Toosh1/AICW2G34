@@ -112,7 +112,6 @@ def append_message(role,message):
     messages.append({"role": role, "content": message})
 
 # Main chat loop
-nlp.setup()
 override = None
 
 while True:
