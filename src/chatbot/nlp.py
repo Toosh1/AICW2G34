@@ -49,7 +49,7 @@ def add_stations_to_vocab() -> None:
     Add station names to the spaCy vocabulary for spell checking.
     :return: None
     """
-    stations_list = [station.lower() for station in station_codes.keys()]
+    stations_list = [station.lower() for station in get_all_station_names()]
     station_words = {token for station in stations_list for token in station.split()}
     add_to_vocabulary(station_words)
     add_to_vocabulary(stations_list)
@@ -66,8 +66,7 @@ def add_station_entity_ruler() -> None:
         after="ner",
     )
 
-
-    stations = [station.upper() for station in station_codes.keys()]
+    stations = [station.upper() for station in get_all_station_names()]
     places = {processed.upper() for station in stations for processed in process_station_name(station, nlp)}
 
     # Remove any overlapping names
@@ -172,7 +171,7 @@ def find_closest_stations(query: str) -> list:
     :param query: The input query string
     :return: A list of similar station names
     """
-    station_names = [station.lower() for station in station_codes.keys()]
+    station_names = [station.lower() for station in get_all_station_names()]
     similar_stations = process.extract(query.lower(), station_names, limit=3)
     return [station[0] for station in similar_stations]
 

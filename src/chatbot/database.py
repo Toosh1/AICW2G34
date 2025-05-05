@@ -32,16 +32,6 @@ def load_patterns() -> dict[str, str]:
                 extraction_patterns[intent] = details
     return extraction_patterns
 
-def get_station_code(station_name: str) -> str:
-    """
-    Get the station code for a given station name.
-    :param station_name: The name of the station.
-    :return: The station code.
-    """
-    global station_codes
-    station_name = station_name.lower().strip()
-    return station_codes.get(station_name, None)
-
 def get_prepositions(term: str) -> dict[str, list]:
     """
     Get the prepositions for a given term.
