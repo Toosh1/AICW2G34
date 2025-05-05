@@ -68,20 +68,21 @@ def get_row_data(station, ticket_hours) -> dict[str, str]:
         'Ticket Office Hours': find_text(station, './/ns:TicketOffice/com:Open/com:DayAndTimeAvailability/com:OpeningHours/com:OpenPeriod/com:StartTime'),
     }
 
-xml_file = 'src/data/static_feeds/stations/tocs.xml'
-tree = ET.parse(xml_file)
-root = tree.getroot()
-rows = []
+def get_enhanced_stations() -> None:
+    xml_file = 'src/data/static_feeds/stations/tocs.xml'
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+    rows = []
 
-namespaces = {
-    'ns': 'http://nationalrail.co.uk/xml/station',
-    'com': 'http://nationalrail.co.uk/xml/common',
-    'add': 'http://nationalrail.co.uk/xml/address'
-}
+    namespaces = {
+        'ns': 'http://nationalrail.co.uk/xml/station',
+        'com': 'http://nationalrail.co.uk/xml/common',
+        'add': 'http://nationalrail.co.uk/xml/address'
+    }
 
-for station in root.findall('.//ns:Station', namespaces):
-    ticket_hours = get_ticket_hours(station)
-    rows.append(get_row_data(station, ticket_hours))
+    for station in root.findall('.//ns:Station', namespaces):
+        ticket_hours = get_ticket_hours(station)
+        rows.append(get_row_data(station, ticket_hours))
 
-stations_df = pd.DataFrame(rows)
-stations_df.to_csv('src/data/csv/enhanced_stations.csv', index=False)
+    stations_df = pd.DataFrame(rows)
+    stations_df.to_csv('src/data/csv/enhanced_stations.csv', index=False)

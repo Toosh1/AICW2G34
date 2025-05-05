@@ -1,14 +1,10 @@
-import csv, heapq, json
+'''
+    TODO - Implement max changes to the get_shortest_path function
+'''
+import csv, heapq
 from collections import defaultdict
 from pathlib import Path
 import xml.etree.ElementTree as ET
-
-'''
-    TODO - Ensure enhanced_stations.csv is up to date with the latest stations
-    TODO - Ensure the RGD file is up to date with the latest stations
-    TODO - Ensure the RGC file is up to date with the latest stations
-    TODO - Implement max changes to the get_shortest_path function
-'''
 
 STATION_CODES_PATH = "./src/data/csv/enhanced_stations.csv"
 OLD_STATIONS_PATH = "./src/data/csv/stations.csv"
@@ -26,6 +22,34 @@ late_reasons = {}
 cancellation_reasons = {}
 vias = {}
 tocs = {}
+
+def get_shortest_path(from_station: str, to_station: str) -> list[str]:
+    global station_graph
+    if not station_graph:
+        station_graph = generate_station_graph()
+    
+    # Priority queue: (total_distance, current_station, path)
+    heap = [(0, from_station, [])]
+    visited = set()
+
+    while heap:
+        total_distance, current_station, path = heapq.heappop(heap)
+        
+        if current_station in visited:
+            continue
+        visited.add(current_station)
+        
+        path = path + [current_station]
+
+        if current_station == to_station:
+            return path
+        
+        for neighbor, data in station_graph.get(current_station, {}).items():
+            if neighbor not in visited:
+                distance = float(data['distance'])
+                heapq.heappush(heap, (total_distance + distance, neighbor, path))
+    
+    return []  # No path found
 
 def get_station_name_from_crs(crs: str) -> str:
     """
@@ -132,40 +156,6 @@ def process_journey_metadata(journey: ET.Element) -> tuple[str, dict[str, str]]:
         "stops": []
     }
 
-def process_aws_departure_file(folder: str):
-    folder = Path(folder)
-    files = sorted([f for f in folder.iterdir() if f.is_file()])
-    if not files:
-        raise FileNotFoundError("No files found in the specified folder.")
-    
-    file_path = files[-1]
-    tree = ET.parse(file_path)
-    root = tree.getroot()
-    
-    ns = {'ns': 'http://www.thalesgroup.com/rtti/XmlTimetable/v8'}
-    departure_table = defaultdict(dict)
-    
-    # Loop through all the journeys in the XML file
-    for journey in root.findall('ns:Journey', ns):
-        
-        isPassenger = journey.attrib.get('isPassenger')
-        if isPassenger is not None and isPassenger != "true":
-            continue
-        
-        rid, journey_dict = process_journey_metadata(journey)
-        departure_table[rid] = journey_dict
-        
-        origin = get_journey_boundary(ns, journey, "OR")
-        departure_table[rid]["stops"].append(origin)
-        
-        stops = get_journey_interpoints(ns, journey)
-        departure_table[rid]["stops"].extend(stops)
-        
-        destination = get_journey_boundary(ns, journey, "DT")
-        departure_table[rid]["stops"].append(destination)
-    
-    return departure_table
-
 def process_vias(root: ET.Element, ns) -> dict[str, dict[str, str]]:
     """
     Process the XML tree to extract Vias and their corresponding details.
@@ -231,6 +221,59 @@ def process_location_names(root: ET.Element, ns) -> dict[str, dict[str, str]]:
         locations.setdefault(crs, {"tpl": tpl, "locnames": []})["locnames"].append(locname)
     return locations
 
+def get_all_station_names() -> list[str]:
+    """
+    Get all station names from the station codes dictionary.
+    :return: A list of all station names.
+    """
+    return [data["name"] for data in station_codes.values()]
+
+def get_processed_station_name(name: str) -> str:
+    """
+    Process the station name to ensure it is in the correct format.
+    :param station_name: The name of the station.
+    :return: The processed station name.
+    """
+    name = name.replace(" Rail Station", "").strip()
+    name = name.replace("-", " ")
+    name = name.replace("(", "").replace(")", "")
+
+    return name.lower().strip()
+
+def process_aws_departure_file(folder: str):
+    folder = Path(folder)
+    files = sorted([f for f in folder.iterdir() if f.is_file()])
+    if not files:
+        raise FileNotFoundError("No files found in the specified folder.")
+    
+    file_path = files[-1]
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+    
+    ns = {'ns': 'http://www.thalesgroup.com/rtti/XmlTimetable/v8'}
+    departure_table = defaultdict(dict)
+    
+    # Loop through all the journeys in the XML file
+    for journey in root.findall('ns:Journey', ns):
+        
+        isPassenger = journey.attrib.get('isPassenger')
+        if isPassenger is not None and isPassenger != "true":
+            continue
+        
+        rid, journey_dict = process_journey_metadata(journey)
+        departure_table[rid] = journey_dict
+        
+        origin = get_journey_boundary(ns, journey, "OR")
+        departure_table[rid]["stops"].append(origin)
+        
+        stops = get_journey_interpoints(ns, journey)
+        departure_table[rid]["stops"].extend(stops)
+        
+        destination = get_journey_boundary(ns, journey, "DT")
+        departure_table[rid]["stops"].append(destination)
+    
+    return departure_table
+
 def process_aws_ref_file(folder: str):
     """
     Process the AWS reference file to extract location names, TOC references, and reasons.
@@ -255,90 +298,6 @@ def process_aws_ref_file(folder: str):
     cancellation_reasons_dict = process_reasons(root, ns, 'CancellationReasons')
     vias_dict = process_vias(root, ns)
     return locs_dict, tocs_dict, late_reasons_dict, cancellation_reasons_dict, vias_dict
-
-def get_all_station_names() -> list[str]:
-    """
-    Get all station names from the station codes dictionary.
-    :return: A list of all station names.
-    """
-    return [data["name"] for data in station_codes.values()]
-
-def get_processed_station_name(name: str) -> str:
-    """
-    Process the station name to ensure it is in the correct format.
-    :param station_name: The name of the station.
-    :return: The processed station name.
-    """
-    name = name.replace(" Rail Station", "").strip()
-    name = name.replace("-", " ")
-    name = name.replace("(", "").replace(")", "")
-
-    return name.lower().strip()
-
-def load_station_codes() -> dict[str, str]:
-    """
-    Load station codes from a CSV file into a dictionary.
-    :return: A dictionary where the keys are station names and the values are their corresponding codes.
-    """
-    codes = {}
-    with open(STATION_CODES_PATH, mode="r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            crs = row["CRS Code"]
-            if crs == "":
-                continue
-            cleaned_name = get_processed_station_name(row["Station Name"])
-            codes[crs] = {"names": cleaned_name}
-            codes[crs]["crs3"] = []
-    
-    with open(OLD_STATIONS_PATH, mode="r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            crs3 = row["crs3"]
-            crs = row["crs"]
-            
-            if crs not in codes:
-                continue
-            
-            cleaned_name = get_processed_station_name(row["name"])
-            codes[crs]["crs3"].append(crs3)
-    
-    return codes
-
-def get_london_stations() -> list[str]:
-    """
-    Get a list of London stations from the CSV file.
-    :return: A list of London station names.
-    """
-    stations = []
-    
-    # Load the station links from the RGD file
-    with open(LONDON_STATIONS_PATH, mode="r") as file:
-        lines = file.readlines()
-        
-        # Skip the first 5 lines and ignore last line
-        lines = lines[5:-1]
-        for line in lines:
-            # Split the line by comma and remove \n
-            arr = line.strip().split(",")
-            stations.append(arr[0].strip())
-        
-    return stations
-
-def get_station_links(station_name: str) -> dict[str, dict[str, str]]:
-    """
-    Get the links for a given station from the station graph.
-    :param station_name: The name of the station.
-    :return: A dictionary of links for the given station.
-    """
-    global station_graph
-    if not station_graph:
-        station_graph = generate_station_graph()
-    
-    if station_name in station_graph:
-        return station_graph[station_name]
-    
-    return {}
 
 def generate_station_graph() -> dict[str, str]:
     """
@@ -385,33 +344,58 @@ def generate_station_graph() -> dict[str, str]:
     
     return graph
 
-def get_shortest_path(from_station: str, to_station: str) -> list[str]:
-    global station_graph
-    if not station_graph:
-        station_graph = generate_station_graph()
-    
-    # Priority queue: (total_distance, current_station, path)
-    heap = [(0, from_station, [])]
-    visited = set()
+def get_london_stations() -> list[str]:
+    """
+    Get a list of London stations from the CSV file.
+    :return: A list of London station names.
+    """
+    stations = []
 
-    while heap:
-        total_distance, current_station, path = heapq.heappop(heap)
+    # Load the station links from the RGD file
+    with open(LONDON_STATIONS_PATH, mode="r") as file:
+        lines = file.readlines()
         
-        if current_station in visited:
-            continue
-        visited.add(current_station)
+        # Skip the first 5 lines and ignore last line
+        lines = lines[5:-1]
+        for line in lines:
+            # Split the line by comma and remove \n
+            arr = line.strip().split(",")
+            stations.append(arr[0].strip())
         
-        path = path + [current_station]
+    return stations
 
-        if current_station == to_station:
-            return path
+def load_station_codes() -> dict[str, str]:
+    """
+    Load station codes from a CSV file into a dictionary.
+    :return: A dictionary where the keys are station names and the values are their corresponding codes.
+    """
+    codes = {}
         
-        for neighbor, data in station_graph.get(current_station, {}).items():
-            if neighbor not in visited:
-                distance = float(data['distance'])
-                heapq.heappush(heap, (total_distance + distance, neighbor, path))
+    with open(STATION_CODES_PATH, mode="r") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            crs = row["CRS Code"]
+            if crs == "":
+                continue
+            cleaned_name = get_processed_station_name(row["Station Name"])
+            codes[crs] = {"name": cleaned_name}
+            codes[crs]["crs3"] = []
     
-    return []  # No path found
+    with open(OLD_STATIONS_PATH, mode="r") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            crs3 = row["crs3"]
+            crs = row["crs"]
+            
+            if crs not in codes:
+                continue
+            
+            cleaned_name = get_processed_station_name(row["name"])
+            codes[crs]["crs3"].append(crs3)
+    
+    return codes
+
+# Main ------------------------------------------------------
 
 station_codes = load_station_codes()
 london_stations = get_london_stations()

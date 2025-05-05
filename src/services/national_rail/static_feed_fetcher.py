@@ -49,19 +49,22 @@ def extract_response_contents(response, destination):
         with open(filename, "wb") as f:
             f.write(response.content)
 
+def extract_data(url: str, store: str) -> None:
+    """
+    Extracts data from the given URL and stores it in the specified directory.
+    
+    Args:
+        url (str): The URL to fetch data from.
+        store (str): The directory to store the extracted data.
+    """
+    response = get_data(url)
+    if response is not None:
+        extract_response_contents(response, store)
+        print(f"Data extracted to {store}")
+    else:
+        print(f"Failed to fetch data from {url}")
+
 if __name__ == "__main__":
-    data = get_data(FARES_URL)
-
-    if data is not None:
-        extract_response_contents(data, FARES_STORE)
-        print(f"Fares data extracted to {FARES_STORE}")
-
-    data = get_data(ROUTING_URL)
-    if data is not None:
-        extract_response_contents(data, ROUTING_STORE)
-        print(f"Routing data extracted to {ROUTING_STORE}")
-        
-    data = get_data(STATIONS_URL)
-    if data is not None:
-        extract_response_contents(data, STATIONS_STORE)
-        print(f"Stations data extracted to {STATIONS_STORE}")
+    extract_data(FARES_URL, FARES_STORE)
+    extract_data(ROUTING_URL, ROUTING_STORE)
+    extract_data(STATIONS_URL, STATIONS_STORE)
