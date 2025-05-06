@@ -3,8 +3,8 @@ import json
 responses = {}
 extraction_patterns = {}
 
-RESPONSES_PATH = "./src/data/json/intentions.json"
-EXTRACTION_PATH = "./src/data/json/extraction_patterns.json"
+RESPONSES_PATH = "../data/json/intentions.json"
+EXTRACTION_PATH = "../data/json/extraction_patterns.json"
 
 def load_responses() -> dict[str, str]:
     """

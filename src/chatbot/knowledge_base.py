@@ -12,11 +12,11 @@ import xml.etree.ElementTree as ET
 
 load_dotenv()
 
-STATION_CODES_PATH = "./src/data/csv/enhanced_stations.csv"
-OLD_STATIONS_PATH = "./src/data/csv/stations.csv"
-STATION_LINKS_PATH = "./src/data/static_feeds/routeing/RJRG0872.RGD"
-LONDON_STATIONS_PATH = "./src/data/static_feeds/routeing/RJRG0872.RGC"
-AWS_PATH = "./src/data/aws/"
+STATION_CODES_PATH = "../data/csv/enhanced_stations.csv"
+OLD_STATIONS_PATH = "../data/csv/stations.csv"
+STATION_LINKS_PATH = "../data/static_feeds/routeing/RJRG0872.RGD"
+LONDON_STATIONS_PATH = "../data/static_feeds/routeing/RJRG0872.RGC"
+AWS_PATH = "../data/aws/"
 
 station_graph = {}
 london_stations = []
