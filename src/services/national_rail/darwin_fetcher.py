@@ -1,4 +1,4 @@
-import boto3, os, gzip, shutil, zipfile
+import boto3, os, gzip, shutil
 from dotenv import load_dotenv
 
 load_dotenv()

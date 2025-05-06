@@ -175,3 +175,8 @@ cython_debug/
 
 # Custom
 /src/data/static/
+/src/data/aws
+/src/data/fares
+/src/data/routeing
+/src/data/static_feeds
+/src/data/stations

@@ -13,7 +13,7 @@ def setup():
     global nlp, spell, matcher, cleaned_stations, stations_df
     nlp = spacy.load("en_core_web_sm")
     spell = spellchecker.SpellChecker()
-    stations_df = pd.read_csv("src/data/stations.csv")
+    stations_df = pd.read_csv("src/data/csv/stations.csv")
     second_column = stations_df.iloc[:, 1]
     cleaned_stations = []
 

@@ -1,0 +1,10 @@
+spacy
+rapidfuzz
+llama-cpp-python
+python-dotenv
+boto3
+zeep
+requests
+pandas
+pytest
+psycopg
