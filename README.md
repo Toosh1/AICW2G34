@@ -41,3 +41,19 @@ python -m spacy download en_core_web_sm
 ## 5. 🧰 Install C++ Build Tools (Windows Only)
 
 Download and install CMake and [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (~7 GB).
+
+## 6. 📝 Setup PostgreSQL Table
+
+Setup a PostgreSQL database and add the database password to your dotenv file. Ensure the server is running
+The server properties are currently set as this:
+```py
+conn = psycopg2.connect(
+    host="localhost",
+    port="5432",
+    database="postgres",
+    user="postgres",
+    password=os.getenv("POSTGRES_PASSWORD")
+)
+```
+In `knowledge_base.py` temporarily uncomment the `generate_station_codes_table()` and `generate_departure_table()` functions and run the script to fill up the tables.
+    - You may re-comment these lines after the tables have been fully loaded.

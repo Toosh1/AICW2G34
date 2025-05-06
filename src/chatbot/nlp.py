@@ -215,7 +215,7 @@ def get_time_constraints(text: str, return_phrase: str, departure: str, arrival:
 
     return constraints
 
-def get_journey_times(text: str, return_phase: str, departure: str, arrival: str) -> tuple:
+def get_journey_times(text: str, return_phase: str) -> tuple:
     """
     Extract date and time from the text using regex.
     :param text: The input text to search for date and time.
@@ -293,7 +293,7 @@ if __name__ == "__main__":
         user_input = input("You: ")
         return_phrase = get_return_ticket(user_input)
         departure, arrival, similar_stations = get_station_data(user_input)
-        outbound, inbound = get_journey_times(user_input, return_phrase, departure, arrival)
+        outbound, inbound = get_journey_times(user_input, return_phrase)
         time_constraints = get_time_constraints(user_input, return_phrase, departure, arrival)
         print(f"Return Phrases: {return_phrase}")
         print(f"Departure: {departure}")

@@ -1,10 +1,16 @@
 '''
-    TODO - Implement max changes to the get_shortest_path function
+    1. Get all rids where from_crs is in the list of crs3 codes, excluding DT stations
+    2. Loop through all rids
+    3. Get the subsequent stops for each rid
+    4. Check if stop is to_crs
+    5. Else, get all rids where the stop is in the list of stops, excluding DT stations and repeat the process
 '''
-import csv, heapq
-from collections import defaultdict
+import csv, psycopg2, os
 from pathlib import Path
+from dotenv import load_dotenv
 import xml.etree.ElementTree as ET
+
+load_dotenv()
 
 STATION_CODES_PATH = "./src/data/csv/enhanced_stations.csv"
 OLD_STATIONS_PATH = "./src/data/csv/stations.csv"
@@ -12,10 +18,8 @@ STATION_LINKS_PATH = "./src/data/static_feeds/routeing/RJRG0872.RGD"
 LONDON_STATIONS_PATH = "./src/data/static_feeds/routeing/RJRG0872.RGC"
 AWS_PATH = "./src/data/aws/"
 
-station_codes = {}
 station_graph = {}
 london_stations = []
-departure_table = {}
 
 location_names = {}
 late_reasons = {}
@@ -23,78 +27,88 @@ cancellation_reasons = {}
 vias = {}
 tocs = {}
 
-def get_shortest_path(from_station: str, to_station: str) -> list[str]:
-    global station_graph
-    if not station_graph:
-        station_graph = generate_station_graph()
-    
-    # Priority queue: (total_distance, current_station, path)
-    heap = [(0, from_station, [])]
-    visited = set()
+conn = psycopg2.connect(
+    host="localhost",
+    port="5432",
+    database="postgres",
+    user="postgres",
+    password=os.getenv("POSTGRES_PASSWORD")
+)
 
-    while heap:
-        total_distance, current_station, path = heapq.heappop(heap)
-        
-        if current_station in visited:
-            continue
-        visited.add(current_station)
-        
-        path = path + [current_station]
+#region AWS Departure Table Creation ---
 
-        if current_station == to_station:
-            return path
-        
-        for neighbor, data in station_graph.get(current_station, {}).items():
-            if neighbor not in visited:
-                distance = float(data['distance'])
-                heapq.heappush(heap, (total_distance + distance, neighbor, path))
-    
-    return []  # No path found
+def create_departure_table() -> None:
+    with conn.cursor() as cur:
+        # Delete the table if it exists
+        cur.execute("DROP TABLE IF EXISTS departures")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS departures (
+                departure_id SERIAL PRIMARY KEY,
+                uid VARCHAR(255),
+                train_id VARCHAR(255),
+                ssd VARCHAR(255),
+                toc VARCHAR(255),
+                status VARCHAR(255),
+                train_cat VARCHAR(255)
+            )
+        """)
+        conn.commit()
 
-def get_station_name_from_crs(crs: str) -> str:
-    """
-    Get the station name from the CRS code.
-    :param crs: The CRS code.
-    :return: The station name.
-    """
-    for _, data in station_codes.items():
-        if crs in data.get("crs3"):
-            return data["names"]
-    return None
+def create_stops_table() -> None:
+    with conn.cursor() as cur:
+        # Delete the table if it exists
+        cur.execute("DROP TABLE IF EXISTS stops")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS stops (
+                stop_id SERIAL PRIMARY KEY,
+                rid VARCHAR(255),
+                tpl VARCHAR(255),
+                act VARCHAR(255),
+                ptd TIME,
+                wtd TIME,
+                pta TIME,
+                wta TIME,
+                plat VARCHAR(255),
+                type VARCHAR(255)
+            )
+        """)
+        conn.commit()
 
-def get_crs_code_from_tpl(tpl: str) -> str:
-    """
-    Get the CRS code from the TPL code.
-    :param tpl: The TPL code.
-    :return: The CRS code.
-    """
-    for crs, data in station_codes.items():
-        if tpl in data.get("crs3"):
-            return crs
-    return None
+def insert_departure_data(rid: str, journey_dict: dict) -> None:
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO departures (uid, train_id, ssd, toc, status, train_cat)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING departure_id
+        """, (
+            rid,
+            journey_dict.get("trainId"),
+            journey_dict.get("ssd"),
+            journey_dict.get("toc"),
+            journey_dict.get("status"),
+            journey_dict.get("trainCat")
+        ))
 
-def get_departure_journey(rid: str) -> list[str]:
-    journey_dict = departure_table.get(rid, None)
-    
-    if journey_dict is None:
-        return []
-    
-    stops = journey_dict.get("stops", [])
-    
-    # Convert TPL codes to CRS codes
-    crs_codes = [
-        get_crs_code_from_tpl(stop["tpl"]) or stop["tpl"]
-        for stop in stops if "tpl" in stop
-    ]
-    
-    # Convert CRS Codes to names
-    for i, crs in enumerate(crs_codes):
-        if crs in location_names:
-            locnames = location_names[crs]["locnames"]
-            if locnames:
-                crs_codes[i] = locnames[0]
-    
-    return crs_codes
+        departure_id = cur.fetchone()[0]
+
+        for stop in journey_dict.get("stops", []):
+            if stop is None:
+                continue
+            cur.execute("""
+                INSERT INTO stops (rid, tpl, act, ptd, wtd, pta, wta, plat, type)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                departure_id,
+                stop.get("tpl"),
+                stop.get("act"),
+                stop.get("ptd"),
+                stop.get("wtd"),
+                stop.get("pta"),
+                stop.get("wta"),
+                stop.get("plat"),   # these may be missing
+                stop.get("type")
+            ))
+        conn.commit()
 
 def get_journey_interpoints(ns: dict, journey: ET.Element) -> list[dict[str, str]]:
     stops = []
@@ -155,6 +169,164 @@ def process_journey_metadata(journey: ET.Element) -> tuple[str, dict[str, str]]:
         "trainCat": train_cat,
         "stops": []
     }
+
+def process_aws_departure_file(folder: str):
+    folder = Path(folder)
+    files = sorted([f for f in folder.iterdir() if f.is_file()])
+    if not files:
+        raise FileNotFoundError("No files found in the specified folder.")
+    
+    file_path = files[-1]
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+    
+    ns = {'ns': 'http://www.thalesgroup.com/rtti/XmlTimetable/v8'}
+    
+    # Loop through all the journeys in the XML file
+    for journey in root.findall('ns:Journey', ns):
+        
+        isPassenger = journey.attrib.get('isPassenger')
+        if isPassenger is not None and isPassenger != "true":
+            continue
+        
+        rid, journey_dict = process_journey_metadata(journey)
+        origin = get_journey_boundary(ns, journey, "OR")
+        stops = get_journey_interpoints(ns, journey)
+        destination = get_journey_boundary(ns, journey, "DT")
+        
+        journey_dict["stops"].append(origin)
+        journey_dict["stops"].extend(stops)
+        journey_dict["stops"].append(destination)
+        
+        insert_departure_data(rid, journey_dict)
+    print(f"Processed {len(root.findall('ns:Journey', ns))} journeys from {file_path.name}.")
+
+def generate_departure_table() -> None:
+    """
+    Deletes and creates the departure table in the PostgreSQL database.
+    Should be called once to set up the table.
+    :return: None
+    """
+    create_departure_table()
+    create_stops_table()
+    process_aws_departure_file(AWS_PATH)
+
+#endregion AWS Departure Table Creation ---
+
+#region Station Codes Table Creation ---
+
+def create_station_codes_table() -> None:
+    with conn.cursor() as cur:
+        # Delete the table if it exists
+        cur.execute("DROP TABLE IF EXISTS station_codes")
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS station_codes (
+                crs VARCHAR(255) PRIMARY KEY,
+                name VARCHAR(255),
+                crs3 VARCHAR(255)[],
+                longitude FLOAT,
+                latitude FLOAT,
+                operator VARCHAR(255),
+                location_code VARCHAR(255),
+                address1 VARCHAR(255),
+                address2 VARCHAR(255),
+                postcode VARCHAR(255),
+                ticket_office_hours VARCHAR(255),
+                ticket_machine_available BOOLEAN,
+                seated_area_available BOOLEAN,
+                waiting_room_available BOOLEAN,
+                toilets_available BOOLEAN,
+                baby_change_available BOOLEAN,
+                wifi_available BOOLEAN,
+                ramp_for_train_access_available BOOLEAN,
+                ticket_gates_available BOOLEAN
+            )
+        """)
+        conn.commit()
+
+def insert_station_codes_data(crs: str, data: dict) -> None:
+    with conn.cursor() as cur:
+        cur.execute("""
+            INSERT INTO station_codes (crs, name, crs3, longitude, latitude, operator, location_code, address1, address2, postcode, ticket_office_hours, 
+                ticket_machine_available, seated_area_available, waiting_room_available, toilets_available, baby_change_available, 
+                wifi_available, ramp_for_train_access_available, ticket_gates_available)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            crs,
+            data.get("name"),
+            data.get("crs3", []),
+            data.get("longitude"),
+            data.get("latitude"),
+            data.get("operator"),
+            data.get("location_code"),
+            data.get("address1"),
+            data.get("address2"),
+            data.get("postcode"),
+            data.get("ticket_office_hours"),
+            bool(data.get("ticket_machine_available", False)),
+            bool(data.get("seated_area_available", False)),
+            bool(data.get("waiting_room_available", False)),
+            bool(data.get("toilets_available", False)),
+            bool(data.get("baby_change_available", False)),
+            bool(data.get("wifi_available", False)),
+            bool(data.get("ramp_for_train_access_available", False)),
+            bool(data.get("ticket_gates_available", False)),
+        ))
+        conn.commit()
+
+def add_crs3_to_table(crs: str, crs3: str) -> None:
+    with conn.cursor() as cur:
+        cur.execute("""
+            UPDATE station_codes
+            SET crs3 = array_append(crs3, %s)
+            WHERE crs = %s
+        """, (crs3, crs))
+        conn.commit()
+
+def process_station_csv() -> None:
+    with open(STATION_CODES_PATH, mode="r") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            crs = row["CRS Code"]
+            station_dict = {
+                "name": row["Station Name"],
+                "longitude": row["Longitude"],
+                "latitude": row["Latitude"],
+                "operator": row["Station Operator"],
+                "location_code": row["National Location Code"],
+                "address1": row["Address Line 1"],
+                "address2": row["Address Line 2"],
+                "postcode": row["Postcode"],
+                "ticket_office_hours": row["Ticket Office Hours"],
+                "ticket_machine_available": row["Ticket Machine Available"],
+                "seated_area_available": row["Seated Area Available"],
+                "waiting_room_available": row["Waiting Room Available"],
+                "toilets_available": row["Toilets Available"],
+                "baby_change_available": row["Baby Change Available"],
+                "wifi_available": row["WiFi Available"],
+                "ramp_for_train_access_available": row["Ramp For Train Access Available"],
+                "ticket_gates_available": row["Ticket Gates Available"],
+                "cycle_storage_spaces": row["Cycle Storage Spaces"],
+            }
+            insert_station_codes_data(crs, station_dict)
+    
+    with open(OLD_STATIONS_PATH, mode="r") as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            add_crs3_to_table(row["crs"], row["crs3"])
+
+def generate_station_codes_table() -> None:
+    """
+    Deletes and creates the station codes table in the PostgreSQL database.
+    Should be called once to set up the table.
+    :return: None
+    """
+    create_station_codes_table()
+    process_station_csv()
+
+#endregion Station Codes Table Creation ---
+
+#region AWS Reference File Creation ---
 
 def process_vias(root: ET.Element, ns) -> dict[str, dict[str, str]]:
     """
@@ -221,59 +393,6 @@ def process_location_names(root: ET.Element, ns) -> dict[str, dict[str, str]]:
         locations.setdefault(crs, {"tpl": tpl, "locnames": []})["locnames"].append(locname)
     return locations
 
-def get_all_station_names() -> list[str]:
-    """
-    Get all station names from the station codes dictionary.
-    :return: A list of all station names.
-    """
-    return [data["name"] for data in station_codes.values()]
-
-def get_processed_station_name(name: str) -> str:
-    """
-    Process the station name to ensure it is in the correct format.
-    :param station_name: The name of the station.
-    :return: The processed station name.
-    """
-    name = name.replace(" Rail Station", "").strip()
-    name = name.replace("-", " ")
-    name = name.replace("(", "").replace(")", "")
-
-    return name.lower().strip()
-
-def process_aws_departure_file(folder: str):
-    folder = Path(folder)
-    files = sorted([f for f in folder.iterdir() if f.is_file()])
-    if not files:
-        raise FileNotFoundError("No files found in the specified folder.")
-    
-    file_path = files[-1]
-    tree = ET.parse(file_path)
-    root = tree.getroot()
-    
-    ns = {'ns': 'http://www.thalesgroup.com/rtti/XmlTimetable/v8'}
-    departure_table = defaultdict(dict)
-    
-    # Loop through all the journeys in the XML file
-    for journey in root.findall('ns:Journey', ns):
-        
-        isPassenger = journey.attrib.get('isPassenger')
-        if isPassenger is not None and isPassenger != "true":
-            continue
-        
-        rid, journey_dict = process_journey_metadata(journey)
-        departure_table[rid] = journey_dict
-        
-        origin = get_journey_boundary(ns, journey, "OR")
-        departure_table[rid]["stops"].append(origin)
-        
-        stops = get_journey_interpoints(ns, journey)
-        departure_table[rid]["stops"].extend(stops)
-        
-        destination = get_journey_boundary(ns, journey, "DT")
-        departure_table[rid]["stops"].append(destination)
-    
-    return departure_table
-
 def process_aws_ref_file(folder: str):
     """
     Process the AWS reference file to extract location names, TOC references, and reasons.
@@ -294,10 +413,12 @@ def process_aws_ref_file(folder: str):
     
     locs_dict = process_location_names(root, ns)
     tocs_dict = process_tocref(root, ns)
-    late_reasons_dict = process_reasons(root, ns, 'RunningLateReasons')
+    late_reasons_dict = process_reasons(root, ns, 'LateRunningReasons')
     cancellation_reasons_dict = process_reasons(root, ns, 'CancellationReasons')
     vias_dict = process_vias(root, ns)
     return locs_dict, tocs_dict, late_reasons_dict, cancellation_reasons_dict, vias_dict
+
+#endregion AWS Reference File Creation ---
 
 def generate_station_graph() -> dict[str, str]:
     """
@@ -364,41 +485,33 @@ def get_london_stations() -> list[str]:
         
     return stations
 
-def load_station_codes() -> dict[str, str]:
+def get_processed_station_name(name: str) -> str:
     """
-    Load station codes from a CSV file into a dictionary.
-    :return: A dictionary where the keys are station names and the values are their corresponding codes.
+    Process the station name to ensure it is in the correct format.
+    :param station_name: The name of the station.
+    :return: The processed station name.
     """
-    codes = {}
-        
-    with open(STATION_CODES_PATH, mode="r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            crs = row["CRS Code"]
-            if crs == "":
-                continue
-            cleaned_name = get_processed_station_name(row["Station Name"])
-            codes[crs] = {"name": cleaned_name}
-            codes[crs]["crs3"] = []
-    
-    with open(OLD_STATIONS_PATH, mode="r") as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            crs3 = row["crs3"]
-            crs = row["crs"]
-            
-            if crs not in codes:
-                continue
-            
-            cleaned_name = get_processed_station_name(row["name"])
-            codes[crs]["crs3"].append(crs3)
-    
-    return codes
+    name = name.replace(" Rail Station", "").strip()
+    name = name.replace("-", " ")
+    name = name.replace("(", "").replace(")", "")
+
+    return name.lower().strip()
+
+def get_all_station_names() -> list[str]:
+    """
+    Get all station names from the station codes table.
+    :return: A list of all station names.
+    """
+    with conn.cursor() as cur:
+        cur.execute("SELECT name FROM station_codes")
+        rows = cur.fetchall()
+        return [get_processed_station_name(row[0]) for row in rows]
 
 # Main ------------------------------------------------------
 
-station_codes = load_station_codes()
+# generate_station_codes_table()
+# generate_departure_table()
+
 london_stations = get_london_stations()
-station_graph = generate_station_graph()
 location_names, tocs, late_reasons, cancellation_reasons, vias = process_aws_ref_file(AWS_PATH)
-departure_table = process_aws_departure_file(AWS_PATH)
+station_graph = generate_station_graph()

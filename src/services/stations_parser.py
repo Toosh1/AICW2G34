@@ -1,6 +1,12 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
 
+namespaces = {
+    'ns': 'http://nationalrail.co.uk/xml/station',
+    'com': 'http://nationalrail.co.uk/xml/common',
+    'add': 'http://www.govtalk.gov.uk/people/AddressAndPersonalDetails'
+}
+
 def find_text(station, path):
     el = station.find(path, namespaces)
     return el.text.strip() if el is not None and el.text else None
@@ -59,12 +65,15 @@ def get_row_data(station, ticket_hours) -> dict[str, str]:
         'Address Line 3': get_address_line(station, 2),
         'Address Line 4': get_address_line(station, 3),
         'Postcode': find_text(station, './/add:PostCode'),
-        'Ticket Office Mon-Fri Start': ticket_hours['Mon-Fri'][0],
-        'Ticket Office Mon-Fri End': ticket_hours['Mon-Fri'][1],    
-        'Ticket Office Saturday Start': ticket_hours['Saturday'][0],
-        'Ticket Office Saturday End': ticket_hours['Saturday'][1],
-        'Ticket Office Sunday Start': ticket_hours['Sunday'][0],
-        'Ticket Office Sunday End': ticket_hours['Sunday'][1],
+        'Ticket Machine Available': find_text(station, './/ns:TicketMachine/com:Available'),
+        'Seated Area Available': find_text(station, './/ns:SeatedArea/com:Available'),
+        'Waiting Room Available': find_text(station, './/ns:WaitingRoom/com:Available'),
+        'Toilets Available': find_text(station, './/ns:Toilets/com:Available'),
+        'Baby Change Available': find_text(station, './/ns:BabyChange/com:Available'),
+        'WiFi Available': find_text(station, './/ns:WiFi/com:Available'),
+        'Ramp For Train Access Available': find_text(station, './/ns:RampForTrainAccess/com:Available'),
+        'Ticket Gates Available': find_text(station, './/ns:TicketGates/com:Available'),
+        'Cycle Storage Spaces': find_text(station, './/ns:CycleStorage/Spaces'),
         'Ticket Office Hours': find_text(station, './/ns:TicketOffice/com:Open/com:DayAndTimeAvailability/com:OpeningHours/com:OpenPeriod/com:StartTime'),
     }
 
@@ -74,15 +83,13 @@ def get_enhanced_stations() -> None:
     root = tree.getroot()
     rows = []
 
-    namespaces = {
-        'ns': 'http://nationalrail.co.uk/xml/station',
-        'com': 'http://nationalrail.co.uk/xml/common',
-        'add': 'http://nationalrail.co.uk/xml/address'
-    }
-
     for station in root.findall('.//ns:Station', namespaces):
         ticket_hours = get_ticket_hours(station)
         rows.append(get_row_data(station, ticket_hours))
 
     stations_df = pd.DataFrame(rows)
     stations_df.to_csv('src/data/csv/enhanced_stations.csv', index=False)
+
+if __name__ == "__main__":
+    get_enhanced_stations()
+    print("Enhanced stations data has been saved to 'src/data/csv/enhanced_stations.csv'")
