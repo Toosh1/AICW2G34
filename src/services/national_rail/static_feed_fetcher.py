@@ -9,13 +9,13 @@ import io
 import os
 
 FARES_URL = "https://opendata.nationalrail.co.uk/api/staticfeeds/2.0/fares"
-FARES_STORE = "src/data/fares/"
+FARES_STORE = "src/data/static_feeds/fares/"
 
 ROUTING_URL = "https://opendata.nationalrail.co.uk/api/staticfeeds/2.0/routeing"
-ROUTING_STORE = "src/data/routeing/"
+ROUTING_STORE = "src/data/static_feeds/routeing/"
 
 STATIONS_URL = "https://opendata.nationalrail.co.uk/api/staticfeeds/4.0/stations"
-STATIONS_STORE = "src/data/stations/"
+STATIONS_STORE = "src/data/static_feeds/stations/"
 
 # Ensure directories exist
 os.makedirs(FARES_STORE, exist_ok=True)
