@@ -37,7 +37,9 @@ TIME_ENTITIES = ["TIME", "DATE", "ORDINAL", "SERIES", "MONTH"]
 TIME_CONSTRAINTS = ["DEPARTING", "ARRIVING"]
 departure_terms = get_prepositions("departure")
 arrival_terms = get_prepositions("arrival")
+import nltk
 
+#------Setup the NLP pipeline------
 def setup() -> None:
     add_stations_to_vocab()
     add_to_vocabulary(get_dates())
@@ -76,7 +78,7 @@ def add_station_entity_ruler() -> None:
     station_patterns = [{"label": "STATION", "pattern": station.upper()} for station in stations]
     place_patterns = [{"label": "PLACE", "pattern": place.upper()} for place in places]
 
-    ruler.add_patterns(station_patterns)
+    ruler.add_patterns(station_patterns) 
     ruler.add_patterns(place_patterns)
 
 def add_series_entity_ruler() -> None:
@@ -111,6 +113,9 @@ def add_matcher_patterns() -> None:
     constraint_matcher.add("ARRIVING", get_arrive_before_patterns(), greedy="LONGEST")
     return_matcher.add("RETURN", get_return_patterns(), greedy="LONGEST")
 
+
+#------Text Preprocessing Functions------
+
 def extract_split_term(text: str, variations: list) -> str:
     return min(
         variations,
@@ -132,12 +137,11 @@ def extract_date_and_time(text: str) -> dict:
     doc = nlp(text)
 
     # Ignore if no entities are found
-    if not doc.ents:
-        return None
 
     journey = {"DATE": [], "TIME": []}
 
     for ent in doc.ents:
+        print(ent.label_, ent.text)
         if ent.label_ in TIME_ENTITIES:
             journey["DATE" if ent.label_ != "TIME" else "TIME"].append(ent.text)
 
@@ -267,9 +271,21 @@ def get_station_data(text: str) -> tuple:
             continue
         if not ent.label_ == "PLACE":
             continue
-        similar_stations.extend(find_closest_stations(ent.text))
+        closest_stations = find_closest_stations(ent.text)
+        similar_stations.append([ent.text, closest_stations])
+
 
     return departure, arrival, similar_stations
+
+def extract_single_station(text: str) -> None:
+    text = preprocess_text(text, nlp, True, True)
+    text = preprocess_text(text, nlp, True, False).upper()
+    doc = nlp(text)
+    for ent in doc.ents:
+        if ent.label_ == "STATION":
+            return ent.text
+    return None
+
 
 def get_return_ticket(text: str) -> str:
     """
