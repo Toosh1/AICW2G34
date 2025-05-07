@@ -238,6 +238,23 @@ def generate_departure_table() -> None:
 
 #region Station Codes Table Creation ---
 
+def get_station_info(crs: str, column: str) -> str:
+    """
+    Get the station information from the database.
+    :param crs: The CRS code of the station.
+    :param column: The column to retrieve from the database.
+    :return: The station information.
+    """
+    with conn.cursor() as cur:
+        cur.execute(f"""
+            SELECT {column} FROM station_codes
+            WHERE crs = %s
+        """, (crs,))
+        row = cur.fetchone()
+        if row is not None:
+            return row[0]
+        return None
+
 def create_station_codes_table() -> None:
     with conn.cursor() as cur:
         # Delete the table if it exists
