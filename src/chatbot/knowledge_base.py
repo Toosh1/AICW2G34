@@ -12,11 +12,11 @@ import xml.etree.ElementTree as ET
 
 load_dotenv()
 
-STATION_CODES_PATH = "../data/csv/enhanced_stations.csv"
-OLD_STATIONS_PATH = "../data/csv/stations.csv"
-STATION_LINKS_PATH = "../data/static_feeds/routeing/RJRG0872.RGD"
-LONDON_STATIONS_PATH = "../data/static_feeds/routeing/RJRG0872.RGC"
-AWS_PATH = "../data/aws/"
+STATION_CODES_PATH = "./src/data/csv/enhanced_stations.csv"
+OLD_STATIONS_PATH = "./src/data/csv/stations.csv"
+STATION_LINKS_PATH = "./src/data/static_feeds/routeing/RJRG0872.RGD"
+LONDON_STATIONS_PATH = "./src/data/static_feeds/routeing/RJRG0872.RGC"
+AWS_PATH = "./src/data/aws/"
 
 station_graph = {}
 london_stations = []
@@ -113,20 +113,14 @@ def insert_departure_data(rid: str, journey_dict: dict) -> None:
 def get_journey_interpoints(ns: dict, journey: ET.Element) -> list[dict[str, str]]:
     stops = []
     for ip_elem in journey.findall('ns:IP', ns):
-        tpl = ip_elem.attrib.get('tpl')
-        act = ip_elem.attrib.get('act')
-        pta = ip_elem.attrib.get('pta')
-        ptd = ip_elem.attrib.get('ptd')
-        wta = ip_elem.attrib.get('wta')
-        wtd = ip_elem.attrib.get('wtd')
-        
         stops.append({
-            "tpl": tpl,
-            "act": act,
-            "ptd": ptd,
-            "wtd": wtd,
-            "pta": pta,
-            "wta": wta,
+            "tpl": ip_elem.attrib.get('tpl'),
+            "act": ip_elem.attrib.get('act'),
+            "ptd": ip_elem.attrib.get('ptd'),
+            "wtd": ip_elem.attrib.get('wtd'),
+            "pta": ip_elem.attrib.get('pta'),
+            "wta": ip_elem.attrib.get('wta'),
+            "type": "IP",
         })
     return stops
 
@@ -138,16 +132,13 @@ def get_journey_boundary(ns: dict, journey: ET.Element, boundary: str) -> dict[s
     :return: The origin of the journey.
     """
     for elem in journey.findall(f'ns:{boundary}', ns):
-        tpl = elem.attrib.get('tpl')
-        act = elem.attrib.get('act')
-        ptd = elem.attrib.get('ptd')
-        wtd = elem.attrib.get('wtd')
-        
         return {
-            "tpl": tpl,
-            "act": act,
-            "ptd": ptd,
-            "wtd": wtd,
+            "tpl": elem.attrib.get('tpl'),
+            "act": elem.attrib.get('act'),
+            "ptd": elem.attrib.get('ptd'),
+            "wtd": elem.attrib.get('wtd'),
+            "plat": elem.attrib.get('plat'),
+            "type": boundary,
         }
 
 def process_journey_metadata(journey: ET.Element) -> tuple[str, dict[str, str]]:
@@ -510,7 +501,7 @@ def get_all_station_names() -> list[str]:
 # Main ------------------------------------------------------
 
 # generate_station_codes_table()
-# generate_departure_table()
+generate_departure_table()
 
 london_stations = get_london_stations()
 location_names, tocs, late_reasons, cancellation_reasons, vias = process_aws_ref_file(AWS_PATH)
