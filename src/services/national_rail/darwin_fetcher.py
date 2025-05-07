@@ -82,6 +82,3 @@ def retrieve_files_from_s3():
         route_key = route_files[0]['Key']
         route_path = os.path.join(STORE, os.path.basename(route_key))
         download_file(BUCKET_NAME, route_key, route_path)
-
-if __name__ == "__main__":
-    retrieve_files_from_s3()

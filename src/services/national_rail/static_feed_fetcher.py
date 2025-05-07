@@ -64,7 +64,10 @@ def extract_data(url: str, store: str) -> None:
     else:
         print(f"Failed to fetch data from {url}")
 
-if __name__ == "__main__":
+def extract_all_data() -> None:
+    """
+    Extracts all static data from the National Rail API and stores it in the specified directories.
+    """
     extract_data(FARES_URL, FARES_STORE)
     extract_data(ROUTING_URL, ROUTING_STORE)
     extract_data(STATIONS_URL, STATIONS_STORE)

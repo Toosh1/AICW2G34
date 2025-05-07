@@ -44,8 +44,7 @@ Download and install CMake and [Microsoft C++ Build Tools](https://visualstudio.
 
 ## 6. 📝 Setup PostgreSQL Table and Data
 
-Within `src/services/national_rail`, run `darwin_fetcher.py` and `static_feed_fetcher.py` to download relavant train data
-Then run `stations_parser.py` in `src/services` to process the `tocs.xml` that was downloaded.
+Run `src/chatbot/knowledge_acquisition.py` to download relavant train and station data
 
 Setup a PostgreSQL database and add the database password to your dotenv file. Ensure the server is running
 The server properties are currently set as this:

@@ -89,7 +89,4 @@ def get_enhanced_stations() -> None:
 
     stations_df = pd.DataFrame(rows)
     stations_df.to_csv('src/data/csv/enhanced_stations.csv', index=False)
-
-if __name__ == "__main__":
-    get_enhanced_stations()
     print("Enhanced stations data has been saved to 'src/data/csv/enhanced_stations.csv'")
