@@ -5,6 +5,7 @@
     4. Check if stop is to_crs
     5. Else, get all rids where the stop is in the list of stops, excluding DT stations and repeat the process
 '''
+from collections import deque
 import csv, psycopg2, os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -37,13 +38,44 @@ conn = psycopg2.connect(
 
 #region AWS Departure Table Creation ---
 
+def get_stops_from_departure(rid: str) -> list[str]:
+    """
+    Get all stops from a given rid (Route ID).
+    :param rid: The rid to get stops from.
+    :return: A list of tpl (Train Platform Location) for the stops.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT tpl FROM stops
+            WHERE rid = %s
+            ORDER BY stop_id
+        """, (rid,))
+        rows = cur.fetchall()
+        return [row[0] for row in rows]
+
+def get_departures(from_tpl: str) -> list[str]:
+    """
+    Get all departures from a given tpl (Train Platform Location).
+    :param from_tpl: The tpl to get departures from.
+    :return: A list of rids (Route IDs) for the departures.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT rid FROM stops 
+            WHERE tpl = %s
+            AND type != 'DT'
+        """, (from_tpl,))
+        rows = cur.fetchall()
+        return [row[0] for row in rows]
+
+
 def create_departure_table() -> None:
     with conn.cursor() as cur:
         # Delete the table if it exists
         cur.execute("DROP TABLE IF EXISTS departures")
         cur.execute("""
             CREATE TABLE IF NOT EXISTS departures (
-                departure_id SERIAL PRIMARY KEY,
+                rid VARCHAR(255) PRIMARY KEY,
                 uid VARCHAR(255),
                 train_id VARCHAR(255),
                 ssd VARCHAR(255),
@@ -77,9 +109,9 @@ def create_stops_table() -> None:
 def insert_departure_data(rid: str, journey_dict: dict) -> None:
     with conn.cursor() as cur:
         cur.execute("""
-            INSERT INTO departures (uid, train_id, ssd, toc, status, train_cat)
+            INSERT INTO departures (rid, train_id, ssd, toc, status, train_cat)
             VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING departure_id
+            RETURNING rid
         """, (
             rid,
             journey_dict.get("trainId"),
@@ -89,7 +121,7 @@ def insert_departure_data(rid: str, journey_dict: dict) -> None:
             journey_dict.get("trainCat")
         ))
 
-        departure_id = cur.fetchone()[0]
+        rid = cur.fetchone()[0]
 
         for stop in journey_dict.get("stops", []):
             if stop is None:
@@ -98,14 +130,14 @@ def insert_departure_data(rid: str, journey_dict: dict) -> None:
                 INSERT INTO stops (rid, tpl, act, ptd, wtd, pta, wta, plat, type)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                departure_id,
+                rid,
                 stop.get("tpl"),
                 stop.get("act"),
                 stop.get("ptd"),
                 stop.get("wtd"),
                 stop.get("pta"),
                 stop.get("wta"),
-                stop.get("plat"),   # these may be missing
+                stop.get("plat"),
                 stop.get("type")
             ))
         conn.commit()
@@ -501,7 +533,7 @@ def get_all_station_names() -> list[str]:
 # Main ------------------------------------------------------
 
 # generate_station_codes_table()
-generate_departure_table()
+# generate_departure_table()
 
 london_stations = get_london_stations()
 location_names, tocs, late_reasons, cancellation_reasons, vias = process_aws_ref_file(AWS_PATH)
