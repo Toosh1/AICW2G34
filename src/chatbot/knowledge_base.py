@@ -36,7 +36,6 @@ conn = psycopg2.connect(
     password=os.getenv("POSTGRES_PASSWORD")
 )
 
-#region AWS Departure Table Creation ---
 
 def get_stops_from_departure(rid: str) -> list[str]:
     """
@@ -236,6 +235,22 @@ def generate_departure_table() -> None:
 #endregion AWS Departure Table Creation ---
 
 #region Station Codes Table Creation ---
+
+def get_station_code_from_name(name: str) -> str:
+    """
+    Get the station code from the station name.
+    :param name: The name of the station.
+    :return: The CRS code of the station.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT crs FROM station_codes
+            WHERE name = %s
+        """, (name,))
+        row = cur.fetchone()
+        if row is not None:
+            return row[0]
+        return "Invalid station name."
 
 def get_all_station_details(crs: str) -> str:
     """

@@ -9,6 +9,8 @@ import json
 from llama_cpp import Llama
 from dotenv import load_dotenv
 import nlp
+import routes 
+import knowledge_base as kb
 
 llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)
 messages = [""]
@@ -55,7 +57,7 @@ def specific_prompt_builder(goal):
     return message
 
 def incorrect_station_prompt_builder(close_stations):
-    suggestion = ", ".join([item for sublist in close_stations[1] for item in sublist])
+    suggestion = ", ".join(close_stations[1])
     message = {
         "role": "system",
         "content": (
@@ -71,7 +73,7 @@ def two_stations_prompt_builder(close_stations):
         "role": "system",
         "content": (
             "You are a railway assistant who is helping a user who is trying to book a train ticket. Please be kind and polite but stick to the instruction below.\n"
-            "(HIGH IMPORTANCE) The user has entered incorrect stations " + {close_stations[0][0]} +", please ask for a correction with the following suggestions: "
+            "(HIGH IMPORTANCE) The user has entered incorrect stations " + {close_stations[0]} +", please ask for a correction with the following suggestions: "
             
         )
     }
@@ -119,7 +121,7 @@ def fill_station_info(user_input):
         if not info.get("departure_station"):
             while not info.get("departure_station"):
                 if similar_stations:
-                    messages[0] = incorrect_station_prompt_builder((user_input, similar_stations[0]))
+                    messages[0] = incorrect_station_prompt_builder(similar_stations[0])
                     llm_generate_question()
                     corrected_input = ask_user()
                     station = nlp.extract_single_station(corrected_input)
@@ -134,7 +136,7 @@ def fill_station_info(user_input):
         if not info.get("arrival_station"):
             while not info.get("arrival_station"):
                 if similar_stations:
-                    messages[0] = incorrect_station_prompt_builder((user_input, similar_stations[0]))
+                    messages[0] = incorrect_station_prompt_builder(similar_stations[0])
                     llm_generate_question()
                     corrected_input = ask_user()
                     station = nlp.extract_single_station(corrected_input)
@@ -179,6 +181,20 @@ def fill_time_info(user_input):
     info["departure_date"] = outbound_date
     info["departure_time"] = outbound_time
 
+def ask_for_help():
+    route = routes.main(info["departure_station"].upper(), info["arrival_station"].upper())
+    crs_dep, crs_arr = kb.get_station_code_from_name(info["departure_station"].capitalize()), kb.get_station_code_from_name(info["arrival_station"].capitalize())
+    print(info)
+    
+    information = kb.get_all_station_details(crs_dep) + kb.get_all_station_details(crs_arr)
+    print(information)
+    messages[0] = help_prompt_builder(information)
+    while True:
+        llm_generate_question()
+        ask_user()
+    #fuck off
+
+
 def main():
     #Firstly ask the user for all basic information , departure station, arrival station and departure time
     messages[0] = generic_prompt_builder(info.keys())
@@ -187,6 +203,7 @@ def main():
     fill_station_info(user_input)
     fill_time_info(user_input)
     print(info)
+    ask_for_help()
 
 if __name__ == "__main__":
     main()

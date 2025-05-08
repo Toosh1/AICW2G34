@@ -113,13 +113,9 @@ def count_route_changes(path_with_routes):
         last = current
     return changes
 
-# Main logic
-if __name__ == "__main__":
+def main(start_station, end_station):
     graph, route_map = build_station_graph_with_routes(route_objects)
-
-    start_station = "NORWICH"
-    end_station = "MAIDSTONE EAST"
-    paths = find_all_paths_with_routes(graph, route_map, start_station, end_station, max_depth=10)
+    paths = find_all_paths_with_routes(graph, route_map, start_station, end_station, max_depth=8)
 
     if paths:
         optimal_path = min(paths, key=count_route_changes)
@@ -129,9 +125,11 @@ if __name__ == "__main__":
 
         seen_routes = set()
         prev_station = None
+        station_list = []
 
         for station, route in optimal_path:
             station_upper = station.upper()
+            station_list.append(station)
 
             if route:
                 # Print Underground Route cleanly
@@ -154,5 +152,10 @@ if __name__ == "__main__":
                 print(station)
 
             prev_station = station
+
+        return " -> ".join(station_list)
     else:
         print(f"No path found from {start_station} to {end_station}.")
+        return ""
+
+
