@@ -68,7 +68,6 @@ def get_departures(from_tpl: str) -> list[str]:
         rows = cur.fetchall()
         return [row[0] for row in rows]
 
-
 def create_departure_table() -> None:
     with conn.cursor() as cur:
         # Delete the table if it exists
@@ -238,6 +237,63 @@ def generate_departure_table() -> None:
 
 #region Station Codes Table Creation ---
 
+def get_all_station_details(crs: str) -> str:
+    """
+    Get all station details from the database.
+    :param crs: The CRS code of the station.
+    :return: A sentence summarizing the station's details.
+    """
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT * FROM station_codes
+            WHERE crs = %s
+        """, (crs,))
+        row = cur.fetchone()
+        if row is None:
+            return "Invalid station code."
+
+        (
+            crs_code, name, crs3, longitude, latitude, operator, location_code, address1, address3,
+            address2, address4, postcode, ticket_office_hours, ticket_machine_available,
+            seated_area_available, waiting_room_available, toilets_available,
+            baby_change_available, wifi_available, ramp_for_train_access_available,
+            ticket_gates_available
+        ) = row
+        
+        operator_name = tocs.get(operator, operator)
+
+        sentence = f"{name} station ({crs_code}) is operated by {operator_name}.\n" 
+        sentence += f"It is located at {address1}, {address2}, {address3}, {address4}, {postcode}.\n"
+        
+        if ticket_office_hours:
+            # Convert "06:00:00.000" → "06:00" and "00.000" → "00"
+            parts = ticket_office_hours.replace(".", ":").split(":")
+            start = f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+            end = f"{int(parts[2]):02d}:{int(parts[3]):02d}"
+            sentence += f"The ticket office is open from {start} to {end}\n\n"
+
+        features = [
+            feature for feature, available in [
+            ("a ticket machine", ticket_machine_available),
+            ("a seated area", seated_area_available),
+            ("a waiting room", waiting_room_available),
+            ("toilets", toilets_available),
+            ("baby changing facilities", baby_change_available),
+            ("Wi-Fi", wifi_available),
+            ("a ramp for train access", ramp_for_train_access_available),
+            ("ticket gates", ticket_gates_available),
+            ] if available
+        ]
+
+        if features:
+            sentence += "The station has the following facilities:\n"
+            for feature in features:
+                sentence += f"  • {feature.capitalize()}\n"
+        else:
+            sentence += "\n\nThis station does not list any specific facilities."
+
+        return sentence
+
 def get_station_info(crs: str, column: str) -> str:
     """
     Get the station information from the database.
@@ -253,7 +309,7 @@ def get_station_info(crs: str, column: str) -> str:
         row = cur.fetchone()
         if row is not None:
             return row[0]
-        return None
+        return "Invalid station code."
 
 def create_station_codes_table() -> None:
     with conn.cursor() as cur:
@@ -270,6 +326,8 @@ def create_station_codes_table() -> None:
                 location_code VARCHAR(255),
                 address1 VARCHAR(255),
                 address2 VARCHAR(255),
+                address3 VARCHAR(255),
+                address4 VARCHAR(255),
                 postcode VARCHAR(255),
                 ticket_office_hours VARCHAR(255),
                 ticket_machine_available BOOLEAN,
@@ -287,10 +345,10 @@ def create_station_codes_table() -> None:
 def insert_station_codes_data(crs: str, data: dict) -> None:
     with conn.cursor() as cur:
         cur.execute("""
-            INSERT INTO station_codes (crs, name, crs3, longitude, latitude, operator, location_code, address1, address2, postcode, ticket_office_hours, 
+            INSERT INTO station_codes (crs, name, crs3, longitude, latitude, operator, location_code, address1, address2, address3, address4, postcode, ticket_office_hours, 
                 ticket_machine_available, seated_area_available, waiting_room_available, toilets_available, baby_change_available, 
                 wifi_available, ramp_for_train_access_available, ticket_gates_available)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             crs,
             data.get("name"),
@@ -301,6 +359,8 @@ def insert_station_codes_data(crs: str, data: dict) -> None:
             data.get("location_code"),
             data.get("address1"),
             data.get("address2"),
+            data.get("address3"),
+            data.get("address4"),
             data.get("postcode"),
             data.get("ticket_office_hours"),
             bool(data.get("ticket_machine_available", False)),
@@ -336,6 +396,8 @@ def process_station_csv() -> None:
                 "location_code": row["National Location Code"],
                 "address1": row["Address Line 1"],
                 "address2": row["Address Line 2"],
+                "address3": row["Address Line 3"],
+                "address4": row["Address Line 4"],
                 "postcode": row["Postcode"],
                 "ticket_office_hours": row["Ticket Office Hours"],
                 "ticket_machine_available": row["Ticket Machine Available"],
@@ -363,6 +425,7 @@ def generate_station_codes_table() -> None:
     """
     create_station_codes_table()
     process_station_csv()
+    print("Station codes table created and populated successfully.")
 
 #endregion Station Codes Table Creation ---
 
@@ -448,8 +511,7 @@ def process_aws_ref_file(folder: str):
     tree = ET.parse(file_path)
     root = tree.getroot()
     
-    # Example: parse LocationRef tags
-    ns = {'ns': 'http://www.thalesgroup.com/rtti/XmlRefData/v3'}
+    ns = {'ns': 'http://www.thales-is.com/rtti/XmlTimetable/v1/rttiCTTReferenceSchema.xsd'}
     
     locs_dict = process_location_names(root, ns)
     tocs_dict = process_tocref(root, ns)
@@ -555,3 +617,5 @@ def get_all_station_names() -> list[str]:
 london_stations = get_london_stations()
 location_names, tocs, late_reasons, cancellation_reasons, vias = process_aws_ref_file(AWS_PATH)
 station_graph = generate_station_graph()
+
+print(get_all_station_details("MDE"))

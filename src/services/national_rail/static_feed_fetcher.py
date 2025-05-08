@@ -2,7 +2,6 @@
 Extracts static data from the National Rail API and stores it in the src/data/fares directory.
 """
 
-import token_generator
 import requests
 import zipfile
 import io
@@ -22,9 +21,12 @@ os.makedirs(FARES_STORE, exist_ok=True)
 os.makedirs(ROUTING_STORE, exist_ok=True)
 os.makedirs(STATIONS_STORE, exist_ok=True)
 
-def get_data(url):
-    # Get authentication token
-    token = token_generator.get_auth_token()
+def get_data(url, token = None):
+    # Get authentication token, if not provided
+    if token is None:
+        import token_generator
+        token = token_generator.get_auth_token()
+        
     headers = {"X-Auth-Token": token}
     
     try:
@@ -49,7 +51,7 @@ def extract_response_contents(response, destination):
         with open(filename, "wb") as f:
             f.write(response.content)
 
-def extract_data(url: str, store: str) -> None:
+def extract_data(url: str, store: str, token: str) -> None:
     """
     Extracts data from the given URL and stores it in the specified directory.
     
@@ -57,17 +59,17 @@ def extract_data(url: str, store: str) -> None:
         url (str): The URL to fetch data from.
         store (str): The directory to store the extracted data.
     """
-    response = get_data(url)
+    response = get_data(url, token)
     if response is not None:
         extract_response_contents(response, store)
         print(f"Data extracted to {store}")
     else:
         print(f"Failed to fetch data from {url}")
 
-def extract_all_data() -> None:
+def extract_all_data(token=None) -> None:
     """
     Extracts all static data from the National Rail API and stores it in the specified directories.
     """
-    extract_data(FARES_URL, FARES_STORE)
-    extract_data(ROUTING_URL, ROUTING_STORE)
-    extract_data(STATIONS_URL, STATIONS_STORE)
+    extract_data(FARES_URL, FARES_STORE, token)
+    extract_data(ROUTING_URL, ROUTING_STORE, token)
+    extract_data(STATIONS_URL, STATIONS_STORE, token)

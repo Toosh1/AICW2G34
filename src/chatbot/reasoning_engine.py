@@ -21,6 +21,17 @@ info = {
     "departure_date": None,
 }
 
+def help_prompt_builder(station_info: str):
+    message = {
+        "role": "system",
+        "content": (
+            "You are a railway assistant who is helping a user, you know this information about a station, if a user asks you about a station, please provide the information below.\n"
+            "(HIGH IMPORTANCE) If the information provided does not answer the user's question, please apologize and tell them you do not know.\n"
+            + station_info + "\n"
+        )
+    }
+    return message
+
 def generic_prompt_builder(keys):
     message = {
         "role": "system",
@@ -76,10 +87,8 @@ def please_try_again():
     }
     return message
 
-
 def append_message(role,message):
     messages.append({"role": role, "content": message})
-
 
 def ask_user():
     user_input = input("\nYou: ")
@@ -137,8 +146,6 @@ def fill_station_info(user_input):
                         llm_generate_question()
                         corrected_input = ask_user()
 
-
-
 def fill_time_info(user_input):
     return_phrase = nlp.get_return_ticket(user_input)
     outbound = nlp.extract_date_and_time(user_input)
@@ -172,7 +179,6 @@ def fill_time_info(user_input):
     info["departure_date"] = outbound_date
     info["departure_time"] = outbound_time
 
-
 def main():
     #Firstly ask the user for all basic information , departure station, arrival station and departure time
     messages[0] = generic_prompt_builder(info.keys())
@@ -181,9 +187,6 @@ def main():
     fill_station_info(user_input)
     fill_time_info(user_input)
     print(info)
-
-
-    
 
 if __name__ == "__main__":
     main()
