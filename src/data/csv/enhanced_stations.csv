@@ -203,7 +203,7 @@ BEJ,Bedlington,BEDLINGTON,-1.5692438253784147,55.14062956262779,NT,766600,Bedlng
 BMT,Bedminster,BEDMINSTER,-2.594156901,51.44008674,GW,324500,Bedminster station,Fraser Street,Bedminster,"Bristol, City of",BS3 4LU,,false,false,false,false,false,true,false,,
 BEH,Bedworth,BEDWORTH,-1.467391189,52.47931356,WM,116500,Bedworth station,Bulkington Road,Bedworth,Warwickshire,CV12 8JG,,true,false,false,false,false,true,false,,
 BDW,Bedwyn,BEDWYN,-1.598795279,51.37963498,GW,307000,Bedwyn station,The Knapp,Great Bedwyn,Wiltshire,SN8 5RD,,true,false,false,false,false,true,false,,
-BEE,Beeston,BEESTON,-1.207661803,52.92077475,EM,162500,Beeston station,Station Road,Beeston,Nottinghamshire,NG9 2AB,,false,,true,false,false,false,false,,06:10:00.000
+BEE,Beeston,BEESTON,-1.207661803,52.92077475,EM,162500,Beeston station,Station Road,Beeston,Nottinghamshire,NG9 2AB,,false,,true,false,false,true,false,,06:10:00.000
 BKS,Bekesbourne,BEKESBOURNE,1.136717912,51.26136142,SE,519800,Bekesbourne station,Station Road,Bekesbourne,Kent,CT4 5EP,,true,false,false,false,false,true,false,,
 BLV,Belle Vue,BELLE VUE,-2.180399301,53.46216055,NT,278500,Belle Vue station,Glencastle Road,off Junction Hyde Road,Gorton,M18 1AA,,true,false,false,false,false,true,false,,
 BLG,Bellgrove,BELLGROVE,-4.225428982,55.85711966,SR,989500,Bellgrove station,Bellgrove Street,Bellgrove,Glasgow City,G31 1SG,,true,true,false,false,false,false,false,,

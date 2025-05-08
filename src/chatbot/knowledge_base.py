@@ -511,7 +511,11 @@ def process_aws_ref_file(folder: str):
     tree = ET.parse(file_path)
     root = tree.getroot()
     
-    ns = {'ns': 'http://www.thales-is.com/rtti/XmlTimetable/v1/rttiCTTReferenceSchema.xsd'}
+    ns = {
+            'ns': 'http://www.thalesgroup.com/rtti/XmlTimetable/v99/rttiCTTReferenceSchema.xsd',
+            'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+            'xsd': 'http://www.w3.org/2001/XMLSchema'
+        }
     
     locs_dict = process_location_names(root, ns)
     tocs_dict = process_tocref(root, ns)
@@ -617,5 +621,3 @@ def get_all_station_names() -> list[str]:
 london_stations = get_london_stations()
 location_names, tocs, late_reasons, cancellation_reasons, vias = process_aws_ref_file(AWS_PATH)
 station_graph = generate_station_graph()
-
-print(get_all_station_details("MDE"))
