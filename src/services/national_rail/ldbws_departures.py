@@ -1,5 +1,4 @@
-import json
-import os
+import json, os, journey_planner
 from zeep import Client
 from dotenv import load_dotenv
 
@@ -12,21 +11,21 @@ def setup_client():
     client.set_default_soapheaders(header)
     return client
 
-def get_departing_time(cliemt, from_station, to_station) -> str:
-    data = get_next_departure(client, from_station, to_station)
+def get_departing_time(from_station, to_station) -> str:
+    optimal_route = journey_planner.get_optimal_path(from_station, to_station)
+    leg = optimal_route[0]
+    
+    if not leg:
+        return None
+    
+    data = get_next_departure(leg[0][0], leg[1][[0]])
+    
     if data:
         return data.get("scheduled_departure_time")
     return None
 
-def get_arrival_time(client, from_station, to_station) -> str:
-    data = get_next_departure(client, from_station, to_station)
-    last_calling_point = data.get("calling_points", [])[-1] if data.get("calling_points") else None
-    if last_calling_point:
-        return last_calling_point.get("scheduled_arrival_time")
-    return None
-
-def get_next_departure(client, from_station, to_station):
-    response = get_direct_depature_board(client, from_station, to_station)
+def get_next_departure(from_station, to_station):
+    response = get_direct_depature_board(from_station, to_station)
     
     if not (response and response.trainServices):
         return []
@@ -56,7 +55,7 @@ def get_next_departure(client, from_station, to_station):
         ]
     return data
 
-def get_direct_depature_board(client, from_station, to_station):
+def get_direct_depature_board(from_station, to_station):
     try:
         # Get departure board info
         response = client.service.GetDepBoardWithDetails(
@@ -70,7 +69,7 @@ def get_direct_depature_board(client, from_station, to_station):
     except Exception as e:
         return None
 
-def get_departure_board(client, from_station):
+def get_departure_board(from_station):
     try:
         response = client.service.GetDepBoardWithDetails(numRows=10, crs=from_station,filterType="from")
         return response
@@ -78,8 +77,3 @@ def get_departure_board(client, from_station):
         return []
 
 client = setup_client()
-
-if __name__ == "__main__":
-    from_station = "LST"
-    to_station = "NRW"
-    print(json.dumps(get_next_departure(client, from_station, to_station), indent=4))

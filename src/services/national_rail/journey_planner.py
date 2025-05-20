@@ -104,21 +104,6 @@ def find_all_paths_with_routes(graph, route_map, start, end, max_depth=10):
     dfs([start], [], set([start]))
     return all_paths
 
-def count_route_changes(path_with_routes):
-    """
-    Counts how many times the route changes.
-    """
-    routes = [route for _, route in path_with_routes if route]
-    if not routes:
-        return 0
-    changes = 0
-    last = routes[0]
-    for current in routes[1:]:
-        if current != last:
-            changes += 1
-        last = current
-    return changes
-
 def clean_route(route: list) -> list:
     cleaned_route = []
     
@@ -145,30 +130,48 @@ def clean_route(route: list) -> list:
     if current_route:
         grouped_routes.append(current_route)    
     
-    return cleaned_route
+    # Loop through grouped routes, find the group with underground routes
+    for i in range(len(grouped_routes)):
+        if any("Underground Route" in route for _, route in grouped_routes[i]):
+            # Set the last station's route of the underground route group to the route after it
+            if i + 1 >= len(grouped_routes):
+                break
+            # Get the last station from the current group
+            last_station =  grouped_routes[i][-1]
+            last_name, _ = last_station
+            _, next_route = grouped_routes[i + 1][0]
+            
+            next_group = grouped_routes[i + 1]
+            next_group.insert(0, (last_name, next_route))
+            break
+    
+    return grouped_routes
+
+def get_optimal_path(start_station, end_station):
+    global routes, route_objects, graph, route_map
+    paths = find_all_paths_with_routes(graph, route_map, start_station, end_station, max_depth=8)
+    if not paths:
+        return []
+    
+    cleaned_paths = [clean_route(path) for path in paths]
+    optimal_path = min(cleaned_paths, key=len)
+    
+    return optimal_path
 
 def print_route(optimal_path: list[tuple]):
     current_route = None
-    
+
+    # Merge the list of tuples into a single list
+    merged_path = []
+    for sublist in optimal_path:
+        merged_path.extend(sublist)
+    optimal_path = merged_path
+
     for station, route in optimal_path:
         if current_route != route:
             print(f"\n--- Route {route} ---")
             current_route = route
         print(f"→ {station}")
-
-def main(start_station, end_station):
-    global routes, route_objects, graph, route_map
-    
-    paths = find_all_paths_with_routes(graph, route_map, start_station, end_station, max_depth=8)
-
-    if not paths:
-        return []
-    
-    optimal_path = min(paths, key=count_route_changes)
-    optimal_path = clean_route(optimal_path)
-    change_count = count_route_changes(optimal_path)
-
-    return optimal_path
 
 routes, route_objects = load_routes_from_csv(FILE_PATH)
 graph, route_map = build_station_graph_with_routes(route_objects)
@@ -177,5 +180,7 @@ if __name__ == "__main__":
     # Example usage
     start_station = "MAIDSTONE EAST"
     end_station = "NORWICH"
-    route = main(start_station, end_station)
+    route = get_optimal_path(start_station, end_station)
+    print(f"Route from {start_station} to {end_station}:")
+    print(route)
     print_route(route)
