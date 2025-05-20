@@ -28,6 +28,25 @@ cancellation_reasons = {}
 vias = {}
 tocs = {}
 
+intent_to_function = {
+    "train_delays": "",#function to get train delays
+    "route_details": "",#function to get route details
+    "departure_time": "",#function to get departure time
+    "arrival_times": "",#function to get arrival times
+    "platform_details": "",#function to get platform details
+    "address_details": ["database",["address1","address2","address3","address4","postcode"]],
+    "train_operator": ["database",["operator"]],
+    "ticket_off_hours": ["database",["ticket_office_hours"]],
+    "ticket_machine": ["database",["ticket_machine_available"]],
+    "seated_area": ["database",["seated_area_available"]],
+    "waiting_area": ["database",["waiting_room_available"]],
+    "toilets": ["database",["toilets_available"]],
+    "baby_changing": ["database",["baby_change_available"]],
+    "wifi": ["database",["wifi_available"]],
+    "ramp_access": ["database",["ramp_for_train_access_available"]],
+    "ticket_gates": ["database",["ticket_gates_available"]],
+}
+
 conn = psycopg2.connect(
     host="localhost",
     port="5432",
