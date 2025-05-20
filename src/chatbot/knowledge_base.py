@@ -55,7 +55,6 @@ conn = psycopg2.connect(
     password=os.getenv("POSTGRES_PASSWORD")
 )
 
-
 def get_stops_from_departure(rid: str) -> list[str]:
     """
     Get all stops from a given rid (Route ID).

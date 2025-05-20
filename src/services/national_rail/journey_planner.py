@@ -1,8 +1,5 @@
 import csv
-from collections import defaultdict, deque
-
-# Define the structure to hold routes
-routes = defaultdict(lambda: {"description": "", "stations": []})
+from collections import defaultdict
 
 # London terminals treated as interchangeable with Underground connections
 LONDON_TERMINALS = {
@@ -21,23 +18,32 @@ LONDON_TERMINALS = {
     "LONDON CANNON STREET"
 }
 
-# Load the CSV file
-with open('src/data/csv/Complete_Train_Routes_and_Stations.csv', newline='', encoding='utf-8') as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        route_num = row['Route Number']
-        if not routes[route_num]["description"]:
-            routes[route_num]["description"] = row['Route Description']
-        routes[route_num]["stations"].append(row['Station'])
+FILE_PATH = 'src/data/csv/Complete_Train_Routes_and_Stations.csv'
 
-# Convert to a list of route objects
-route_objects = []
-for route_number, data in routes.items():
-    route_objects.append({
-        "route_number": route_number,
-        "description": data["description"],
-        "stations": data["stations"]
-    })
+def load_routes_from_csv(file_path) -> tuple:
+    """
+    Loads routes and stations from a CSV file into the routes structure.
+    """
+    # Convert to a list of route objects
+    objs = []
+    # Define the structure to hold routes
+    routes_list = defaultdict(lambda: {"description": "", "stations": []})
+
+    with open(file_path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            route_num = row['Route Number']
+            if not routes_list[route_num]["description"]:
+                routes_list[route_num]["description"] = row['Route Description']
+            routes_list[route_num]["stations"].append(row['Station'])
+    
+    for route_number, data in routes_list.items():
+        objs.append({
+            "route_number": route_number,
+            "description": data["description"],
+            "stations": data["stations"]
+        })
+    return routes_list, objs
 
 def build_station_graph_with_routes(route_objects):
     """
@@ -113,49 +119,63 @@ def count_route_changes(path_with_routes):
         last = current
     return changes
 
+def clean_route(route: list) -> list:
+    cleaned_route = []
+    
+    # Clean the route to remove unnecessary details
+    for station, route_info in route:
+        route = route_info.split(" (")[0] 
+        cleaned_route.append((station, route))
+    
+    # Set the first route to be the same as the second route
+    if len(cleaned_route) > 1:
+        _, second_route = cleaned_route[1]
+        cleaned_route[0] = (cleaned_route[0][0], second_route)
+    
+    # Group the stations by route
+    grouped_routes = []
+    current_route = []
+    
+    for station, route in cleaned_route:
+        if current_route and current_route[-1][1] != route:
+            grouped_routes.append(current_route)
+            current_route = []
+        current_route.append((station, route))
+    
+    if current_route:
+        grouped_routes.append(current_route)    
+    
+    return cleaned_route
+
+def print_route(optimal_path: list[tuple]):
+    current_route = None
+    
+    for station, route in optimal_path:
+        if current_route != route:
+            print(f"\n--- Route {route} ---")
+            current_route = route
+        print(f"→ {station}")
+
 def main(start_station, end_station):
-    graph, route_map = build_station_graph_with_routes(route_objects)
+    global routes, route_objects, graph, route_map
+    
     paths = find_all_paths_with_routes(graph, route_map, start_station, end_station, max_depth=8)
 
-    if paths:
-        optimal_path = min(paths, key=count_route_changes)
-        change_count = count_route_changes(optimal_path)
+    if not paths:
+        return []
+    
+    optimal_path = min(paths, key=count_route_changes)
+    optimal_path = clean_route(optimal_path)
+    change_count = count_route_changes(optimal_path)
 
-        print(f"Best path from {start_station} to {end_station} with {change_count} route change(s):\n")
+    return optimal_path
 
-        seen_routes = set()
-        prev_station = None
-        station_list = []
+routes, route_objects = load_routes_from_csv(FILE_PATH)
+graph, route_map = build_station_graph_with_routes(route_objects)
 
-        for station, route in optimal_path:
-            station_upper = station.upper()
-            station_list.append(station)
-
-            if route:
-                # Print Underground Route cleanly
-                if (prev_station and
-                    prev_station.upper() in LONDON_TERMINALS and
-                    station_upper in LONDON_TERMINALS and
-                    prev_station.upper() != station_upper and
-                    route == "Underground Route"):
-                    print(f"→ {station} (Underground Route)")
-                else:
-                    if route not in seen_routes and route != "Underground Route":
-                        try:
-                            route_num, desc = route.split(" ", 1)
-                        except ValueError:
-                            route_num, desc = route, ""
-                        print(f"\n--- Route {route_num}: {desc.strip('()')} ---")
-                        seen_routes.add(route)
-                    print(f"→ {station}")
-            else:
-                print(station)
-
-            prev_station = station
-
-        return " -> ".join(station_list)
-    else:
-        print(f"No path found from {start_station} to {end_station}.")
-        return ""
-
-
+if __name__ == "__main__":
+    # Example usage
+    start_station = "MAIDSTONE EAST"
+    end_station = "NORWICH"
+    route = main(start_station, end_station)
+    print_route(route)
