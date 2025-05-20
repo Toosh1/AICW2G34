@@ -1,4 +1,19 @@
 {
+    "confirmation": {
+        "patterns": [
+            "yes",
+            "sure",
+            "ok",
+            "yes please",
+            "absolutely",
+            "definitely",
+            "certainly"
+        ],
+        "responses": [
+            "Great! How can I assist you further?",
+            "Thank you! What else can I help you with?"
+        ]
+    },
     "train_delays": {
         "patterns": [
             "is the train delayed",
