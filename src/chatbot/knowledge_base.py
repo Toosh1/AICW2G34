@@ -5,8 +5,7 @@
     4. Check if stop is to_crs
     5. Else, get all rids where the stop is in the list of stops, excluding DT stations and repeat the process
 '''
-from collections import deque
-import csv, psycopg2, os
+import csv, psycopg2, os, sys
 from pathlib import Path
 from dotenv import load_dotenv
 import xml.etree.ElementTree as ET
@@ -238,7 +237,7 @@ def process_aws_departure_file(folder: str):
         journey_dict["stops"].append(destination)
         
         insert_departure_data(rid, journey_dict)
-    print(f"Processed {len(root.findall('ns:Journey', ns))} journeys from {file_path.name}.")
+    print(f"+ Processed {len(root.findall('ns:Journey', ns))} journeys from {file_path.name}.")
 
 def generate_departure_table() -> None:
     """
@@ -458,7 +457,7 @@ def generate_station_codes_table() -> None:
     """
     create_station_codes_table()
     process_station_csv()
-    print("Station codes table created and populated successfully.")
+    print("+ Station codes table created and populated successfully.")
 
 #endregion Station Codes Table Creation ---
 
@@ -647,9 +646,6 @@ def get_all_station_names() -> list[str]:
         return [get_processed_station_name(row[0]) for row in rows]
 
 # Main ------------------------------------------------------
-
-# generate_station_codes_table()
-# generate_departure_table()
 
 london_stations = get_london_stations()
 location_names, tocs, late_reasons, cancellation_reasons, vias = process_aws_ref_file(AWS_PATH)

@@ -399,7 +399,7 @@ BUW,Burley-in-Wharfedale,BURLEY IN WDALE,-1.753521668,53.90838882,NT,856500,Burl
 BNA,Burnage,BURNAGE,-2.215140157,53.42192326,NT,294500,Burnage station,"Fog Lane, off Kingsway",Burnage,Greater Manchester,M20 6FJ,,true,,false,false,false,true,false,,06:30:00.000
 BUD,Burneside (Cumbria),BURNESIDE CUMBR,-2.76621552,54.35530768,NT,197500,Burneside station,Station Road,Burneside,Cumbria,LA9 6RD,,false,false,false,false,false,true,false,,
 BNM,Burnham (Buckinghamshire),BURNHAM BUCKS,-0.646369826,51.52350246,XR,317600,Burnham station,Station Road,Burnham,Buckinghamshire,SL1 6JT,,true,true,true,true,false,true,true,,06:15:00.000
-BUU,Burnham-on-Crouch,BURNHAM ON C,0.814045173,51.63366373,LE,687300,Burnham-on-Crouch station,Station Road,Burnham-on-Crouch,Essex,CM0 8BQ,,true,,false,false,true,true,false,,06:30:00.000
+BUU,Burnham-on-Crouch,BURNHAM ON C,2.3081857979999976,51.83777485955504,LE,687300,Burnham-on-Crouch station,Station Road,Burnham-on-Crouch,Essex,CM0 8BQ,,true,,false,false,true,true,false,,06:30:00.000
 BUB,Burnley Barracks,BURNLEY BARRACKS,-2.258010878,53.79124886,NT,274300,Burnley Barracks station,Junction Street,Burnley Barracks,Lancashire,BB12 0HG,,true,false,false,false,false,true,false,,
 BNC,Burnley Central,BURNLEY CENTRAL,-2.244969486,53.79352327,NT,255000,Burnley Central station,Railway Street,Burnley,Lancashire,BB11 1DA,,true,,false,false,false,true,false,,06:30:00.000
 BYM,Burnley Manchester Road,BURNLEY MANCR RD,-2.248865862,53.78497641,NT,254900,Burnley Manchester Road station,Manchester Road,Burnley Manchester Road,Lancashire,BB11 1JZ,,false,,true,false,false,true,false,,06:45:00.000
@@ -565,7 +565,7 @@ CSD,Cobham & Stoke d'Abernon,-,-0.389336167,51.31810024,SW,555700,Cobham & Stoke
 CSL,Codsall,CODSALL,-2.201767313,52.62730174,WM,461600,Codsall station,Station Road,Codsall,Staffordshire,WV8 1BY,,true,false,false,false,false,true,false,,
 CGN,Cogan,COGAN,-3.189100075,51.4459927,AW,382800,Cogan station,Station Approach,Cogan,Vale of Glamorgan,CF64 2NS,,true,false,false,false,false,true,false,,
 COL,Colchester,COLCHESTER.,0.89347015,51.90061619,LE,686100,Colchester [North] station,Station Approach Road,Colchester,Essex,CO1 1XD,,true,,true,true,true,true,true,,05:00:00.000
-CET,Colchester Town,COLCHESTER TOWN,0.904148555,51.8865294,LE,685300,Colchester Town station,St. Botolphs Circus,Colchester,Essex,CO2 7EF,,true,,true,false,true,true,false,,06:10:00.000
+CET,Colchester Town,COLCHESTER TOWN,0.904148555,51.8865294,LE,685300,Colchester Town station,St. Botolphs Circus,Colchester,Essex,CO2 7EF,,true,,,false,true,true,false,,06:10:00.000
 CEH,Coleshill Parkway,Coleshill Parkwy,-1.708183055,52.5165359,WM,988200,Coleshill Parkway station,Station Road,Coleshill,Warwickshire,B46 1JZ,,true,false,true,true,false,true,false,,06:00:00.000
 CLM,Collingham,COLLINGHAM,-0.750383181,53.14411144,EM,634900,Collingham station,Station Road,Collingham,Nottinghamshire,NG23 7RB,,false,false,false,false,false,false,false,,
 CLL,Collington,COLLINGTON,0.457878337,50.8392821,SN,545700,Collington station,off Cooden Drive,Bexhill-on-sea,East Sussex,TN39 3EW,,true,false,false,false,false,true,false,,
@@ -1036,7 +1036,7 @@ HDW,Hadley Wood,HADLEYWOOD,-0.17653,51.66841,GN,607500,Hadley Wood station,Cresc
 HGF,Hag Fold,HAG FOLD,-2.494828846,53.53386541,NT,258500,Hag Fold station,Spa Road,Hag Fold,Greater Manchester,M46 9WX,,true,false,false,false,false,true,false,,06:25:00.000
 HGG,Haggerston,HAGGERS,-0.076443,51.539121,LO,1022,Haggerston station,Lee Street,Haggerston,London,E8 4DY,,true,false,false,false,true,true,true,,07:30:00.000
 HAG,Hagley,HAGLEY,-2.147009123,52.42240686,WM,457700,Hagley station,Station Drive,Hagley,West Midlands,DY9 0NX,,true,true,true,false,false,true,false,,07:00:00.000
-HMY,Hairmyres,HAIRMYRES,-4.220003661,55.76195707,SR,981000,Hairmyres station,Eaglesham Crescent,near the B764,Hairmyres,G75 8SW,,true,true,false,false,false,false,false,,
+HMY,Hairmyres,HAIRMYRES,-4.22978,55.76173,SR,981000,Hairmyres station,Off Redwood Road,Hairmyres,East Kilbride,G74 5QL,,true,true,true,true,true,true,true,,
 HAL,Hale (Manchester),HALE,-2.347360839,53.37873505,NT,284500,Hale station,Ashley Road,Hale,Greater Manchester,WA14 2UZ,,true,false,false,false,false,true,false,,07:00:00.000
 HAS,Halesworth,HALESWORTH.,1.505698126,52.34669719,LE,726600,Halesworth station,Station Road,Halesworth,Suffolk,IP19 8BZ,,true,false,false,false,false,true,false,,
 HED,Halewood,HALEWOOD,-2.824983416,53.36533326,NT,229500,Halewood station,Hollies Lane,Halewood,Merseyside,L26 0TH,,true,false,false,false,false,true,false,,06:10:00.000
@@ -1146,7 +1146,7 @@ HES,Hessle,HESSLE,-0.442189469,53.71759184,NT,806700,Hessle station,Southfield,H
 HSW,Heswall,HESWALL,-3.07342,53.32947,AW,213800,Heswall station,off Pullman Close,Heswall,Wirral,CH60 1YW,,true,false,false,false,false,true,false,,
 HEV,Hever,HEVER,0.0950779,51.18140581,SN,541700,Hever station,"un-named road, off Hever Lane",Hever,Kent,TN8 7ER,,true,,false,false,false,true,false,,
 HEW,Heworth,HEWORTH,-1.555768445,54.95156601,NT,776600,Heworth station,Sunderland Road,Heworth,Tyne & Wear,NE10 0NE,,false,false,false,false,false,true,false,,
-HEX,Hexham,HEXHAM,-2.095266842,54.97417725,NT,750600,Hexham station,Station Road,Hexham,Northumberland,NE46 1EU,,true,,true,false,true,true,false,,07:25:00.000
+HEX,Hexham,HEXHAM,-2.095266842,54.97417725,NT,750600,Hexham station,Station Road,Hexham,Northumberland,NE46 1EU,,true,,,false,true,true,false,,07:25:00.000
 HYD,Heyford,HEYFORD,-1.299267568,51.91919985,GW,319400,Heyford station,Station Road,Lower Heyford,Oxfordshire,OX6 8UL,,true,false,false,false,false,false,false,,
 HHB,Heysham Port,HEYSHAM PORT,-2.91311509,54.03315438,NT,269100,Heysham Port station,off Princess Alexandra Way,Heysham Port,Lancashire,LA3 2XE,,true,false,false,false,false,true,false,,
 HIB,High Brooms,HIGH BROOMS,0.277345661,51.14939826,SE,523500,High Brooms station,North Farm Road,High Brooms,Kent,TN2 3XE,,true,,false,true,false,true,false,,06:20:00.000

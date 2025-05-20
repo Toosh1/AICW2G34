@@ -26,7 +26,7 @@ def download_file(bucket, key, download_path):
     
     s3.download_file(bucket, key, download_path)
     
-    print(f"Downloaded {key} to {download_path}")
+    print(f"+ Downloaded {key} to {download_path}")
     
     if not download_path.endswith(".gz"):
         return
@@ -36,9 +36,9 @@ def download_file(bucket, key, download_path):
     with gzip.open(download_path, 'rb') as f_in:
         with open(selected_store_path, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
-    print(f"Extracted GZ to {selected_store_path}")
+    print(f"+ Extracted GZ to {selected_store_path}")
     os.remove(download_path)
-    print(f"Deleted {download_path}")
+    print(f"- Deleted {download_path}")
 
 def retrieve_files_from_s3():
     """Retrieve the latest ref and timetable files from S3 bucket."""
@@ -82,3 +82,4 @@ def retrieve_files_from_s3():
         route_key = route_files[0]['Key']
         route_path = os.path.join(STORE, os.path.basename(route_key))
         download_file(BUCKET_NAME, route_key, route_path)
+    print("All files downloaded and extracted.\n")
