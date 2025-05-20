@@ -57,5 +57,4 @@ conn = psycopg2.connect(
     password=os.getenv("POSTGRES_PASSWORD")
 )
 ```
-In `knowledge_base.py` temporarily uncomment the `generate_station_codes_table()` and `generate_departure_table()` functions and run the script to fill up the tables.
-    - You may re-comment these lines after the tables have been fully loaded.
+Run `knowledge_acquisition.py` script to retrieve static data files and parse data into a database.
