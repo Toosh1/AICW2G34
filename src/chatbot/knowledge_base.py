@@ -185,6 +185,8 @@ def get_journey_boundary(ns: dict, journey: ET.Element, boundary: str) -> dict[s
             "ptd": elem.attrib.get('ptd'),
             "wtd": elem.attrib.get('wtd'),
             "plat": elem.attrib.get('plat'),
+            "pta": elem.attrib.get('pta'),
+            "wta": elem.attrib.get('wta'),
             "type": boundary,
         }
 
