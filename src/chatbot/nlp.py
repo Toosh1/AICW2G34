@@ -19,6 +19,10 @@
 import sys, os, re, spacy
 from spacy.matcher import Matcher
 from rapidfuzz import process
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+
 
 # Merge the parent directory to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -29,6 +33,13 @@ from utils.input_handler import *
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
+
+# Create pipeline
+clf = Pipeline([
+    ("vectorizer", TfidfVectorizer()),
+    ("classifier", LogisticRegression())
+])
+
 preposition_matcher = None
 constraint_matcher = None
 return_matcher = None
@@ -37,7 +48,7 @@ TIME_ENTITIES = ["TIME", "DATE", "ORDINAL", "SERIES", "MONTH"]
 TIME_CONSTRAINTS = ["DEPARTING", "ARRIVING"]
 departure_terms = get_prepositions("departure")
 arrival_terms = get_prepositions("arrival")
-import nltk
+
 
 #------Setup the NLP pipeline------
 def setup() -> None:
@@ -46,6 +57,7 @@ def setup() -> None:
     add_series_entity_ruler()
     add_station_entity_ruler()
     add_matcher_patterns()
+    train_intent_classifier()
 
 def add_stations_to_vocab() -> None:
     """
@@ -113,8 +125,20 @@ def add_matcher_patterns() -> None:
     constraint_matcher.add("ARRIVING", get_arrive_before_patterns(), greedy="LONGEST")
     return_matcher.add("RETURN", get_return_patterns(), greedy="LONGEST")
 
+def train_intent_classifier() -> None:
+    global clf
+    training_sentences, intent_labels = get_training_responses_and_labels()
+    clf.fit(training_sentences, intent_labels)
 
 #------Text Preprocessing Functions------
+
+def get_intent(text: str) -> str:
+    """
+    Get the intent of the user input using the trained classifier.
+    :param text: The input text from the user.
+    :return: The predicted intent label.
+    """
+    return clf.predict([text])[0]
 
 def extract_split_term(text: str, variations: list) -> str:
     return min(
@@ -141,7 +165,6 @@ def extract_date_and_time(text: str) -> dict:
     journey = {"DATE": [], "TIME": []}
 
     for ent in doc.ents:
-        print(ent.label_, ent.text)
         if ent.label_ in TIME_ENTITIES:
             journey["DATE" if ent.label_ != "TIME" else "TIME"].append(ent.text)
 
@@ -286,7 +309,6 @@ def extract_single_station(text: str) -> None:
             return ent.text
     return None
 
-
 def get_return_ticket(text: str) -> str:
     """
     Extract if the user is looking for a return ticket.
@@ -312,6 +334,7 @@ if __name__ == "__main__":
         departure, arrival, similar_stations = get_station_data(user_input)
         outbound, inbound = get_journey_times(user_input, return_phrase)
         time_constraints = get_time_constraints(user_input, return_phrase, departure, arrival)
+        intent = get_intent(user_input)
         print(f"Return Phrases: {return_phrase}")
         print(f"Departure: {departure}")
         print(f"Arrival: {arrival}")
@@ -319,4 +342,5 @@ if __name__ == "__main__":
         print(f"Outbound: {outbound}")
         print(f"Inbound: {inbound}")
         print(f"Time Constraints: {time_constraints}")
+        print(f"Intent: {intent}")
         print("--" * 30)

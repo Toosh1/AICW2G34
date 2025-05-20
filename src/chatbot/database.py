@@ -138,5 +138,15 @@ def get_pattern_array(arr: list) -> dict:
     """
     return {"LOWER": {"in": arr}}
 
+def get_training_responses_and_labels() -> list:
+    training_sentences = []
+    intent_labels = []
+    
+    for key in responses:
+        for pattern in responses[key]["patterns"]:
+            training_sentences.append(pattern)
+            intent_labels.append(key)
+    return training_sentences, intent_labels
+
 responses = load_responses()
 extraction_patterns = load_patterns()

@@ -1,4 +1,19 @@
 {
+    "default": {
+        "patterns": [
+            "I am not sure what you mean",
+            "I don't understand",
+            "Can you rephrase that?",
+            "I didn't get that",
+            "could you explain that again?"
+        ],
+        "responses": [
+            "Sorry, I didn't get that.",
+            "Could you please clarify?",
+            "I'm not sure I understand.",
+            "Can you reword that?"
+        ]
+    },
     "greeting": {
         "patterns": [
             "hi",
@@ -47,20 +62,16 @@
             "Glad I could assist!"
         ]
     },
-    "train_info": {
+    "journey_details": {
         "patterns": [
-            "train",
-            "ticket",
-            "journey",
-            "travel",
-            "train schedule",
-            "departure times",
-            "train stations",
-            "train tickets",
-            "train fares",
             "what time is the next train",
-            "is there a train to",
-            "book a train ticket"
+            "is there a train to X",
+            "what is the journey to X",
+            "journey",
+            "train schedule",
+            "what is the route to X like",
+            "how long does it take to get to X",
+            "what is the journey like to X"
         ],
         "responses": [
             "I can help you with train ticket details. Where are you traveling from and to?",
@@ -69,44 +80,76 @@
             "I can assist with train bookings. Where do you want to travel?"
         ]
     },
+    "station_details": {
+        "patterns": [
+            "station",
+            "what facilities are at the station",
+            "where is the station",
+            "does X have toilets",
+            "is there a waiting room",
+            "does X have accessible facilities",
+            "what are the ticket hours for X",
+            "is there baby changing facilities",
+            "are there ticket gates at X",
+            "is there a ticket office",
+            "is there a ticket machine",
+            "is there wifi",
+            "provide station details",
+            "station information"
+        ],
+        "responses": [
+            "I can help you find the nearest train station. Please provide your current location.",
+            "To find the nearest station, please share your location."
+        ]
+    },
     "train_booking": {
         "patterns": [
-            "book a train ticket",
+            "ticket",
+            "i want to book a train",
+            "i want to book a ticket",
             "how to book a train",
             "reserve a train ticket",
             "train booking",
             "train reservation",
-            "how to get a ticket"
+            "how to get a ticket",
+            "i want to go from X to Y",
+            "i need a ticket from X to Y",
+            "i need a train ticket",
+            "i want to travel from X to Y",
+            "i want to go to X",
+            "i want to go to Y",
+            "how do i go from X to Y",
+            "how do i get to X",
+            "reserve a ticket",
+            "book a ticket",   
+            "purchase a ticket",
+            "buy a ticket"
         ],
         "responses": [
             "To book a train ticket, I can assist you in finding available trains. Where would you like to go?",
             "I can guide you through booking your train tickets. Please tell me your departure and destination stations."
         ]
     },
-    "train_schedule": {
+    "train_delays": {
         "patterns": [
-            "when is the next train",
-            "what time does the train leave",
-            "when does the train depart",
-            "train timetable",
-            "next train to",
-            "train departure time"
+            "is the train delayed",
+            "train delay",
+            "train running late",
+            "is my train on time",
+            "train status",
+            "is the 0:00 train to X delayed?",
+            "are there any dleays on the line to X?",
+            "is the train running on time?",
+            "what is the status of my train?",
+            "is there service to X?",
+            "delays",
+            "disruptions",
+            "is the train on time",
+            "running late"
         ],
         "responses": [
-            "I can check the schedule for you. Where are you traveling from?",
-            "Please provide your departure station and destination, and I can give you the next train timings."
-        ]
-    },
-    "train_fare": {
-        "patterns": [
-            "train fare",
-            "how much is the train ticket",
-            "cost of train ticket",
-            "train price"
-        ],
-        "responses": [
-            "I can help you with the fare details. Could you tell me your travel route?",
-            "Train fares depend on the route. Where are you traveling from and to?"
+            "I can check the status of your train. Please provide the train number and station.",
+            "To check for delays, please let me know your train number and departure station."
         ]
     },
     "train_arrival": {
@@ -119,21 +162,6 @@
         "responses": [
             "Please provide the train and station details, and I'll help with the arrival time.",
             "To check the arrival time, let me know your train number and station."
-        ]
-    },
-    "default": {
-        "patterns": [
-            "I am not sure what you mean",
-            "I don't understand",
-            "Can you rephrase that?",
-            "I didn't get that",
-            "could you explain that again?"
-        ],
-        "responses": [
-            "Sorry, I didn't get that.",
-            "Could you please clarify?",
-            "I'm not sure I understand.",
-            "Can you reword that?"
         ]
     }
 }
