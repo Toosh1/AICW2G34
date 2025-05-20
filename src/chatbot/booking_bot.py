@@ -4,7 +4,6 @@ The reasoning engine will be responsible for asking the user for information
 and storing it in the info dictionary.
 '''
 import os
-from llama_cpp import Llama 
 import json
 from llama_cpp import Llama
 from dotenv import load_dotenv
