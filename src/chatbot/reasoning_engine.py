@@ -192,7 +192,6 @@ def ask_for_help():
     while True:
         llm_generate_question()
         ask_user()
-    #fuck off
 
 
 def main():

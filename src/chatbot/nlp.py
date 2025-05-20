@@ -23,7 +23,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-
 # Merge the parent directory to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -132,13 +131,15 @@ def train_intent_classifier() -> None:
 
 #------Text Preprocessing Functions------
 
-def get_intent(text: str) -> str:
+def get_intent(text: str) -> tuple:
     """
     Get the intent of the user input using the trained classifier.
     :param text: The input text from the user.
     :return: The predicted intent label.
     """
-    return clf.predict([text])[0]
+    prediction = clf.predict([text])
+    proability = clf.predict_proba([text])
+    return prediction[0], proability
 
 def extract_split_term(text: str, variations: list) -> str:
     return min(
@@ -334,7 +335,7 @@ if __name__ == "__main__":
         departure, arrival, similar_stations = get_station_data(user_input)
         outbound, inbound = get_journey_times(user_input, return_phrase)
         time_constraints = get_time_constraints(user_input, return_phrase, departure, arrival)
-        intent = get_intent(user_input)
+        intent, confidence = get_intent(user_input)
         print(f"Return Phrases: {return_phrase}")
         print(f"Departure: {departure}")
         print(f"Arrival: {arrival}")
@@ -343,4 +344,5 @@ if __name__ == "__main__":
         print(f"Inbound: {inbound}")
         print(f"Time Constraints: {time_constraints}")
         print(f"Intent: {intent}")
+        print(f"Confidence: {confidence}")
         print("--" * 30)
