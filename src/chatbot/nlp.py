@@ -298,7 +298,6 @@ def get_station_data(text: str) -> tuple:
         closest_stations = find_closest_stations(ent.text)
         similar_stations.append([ent.text, closest_stations])
 
-
     return departure, arrival, similar_stations
 
 def extract_single_station(text: str) -> None:

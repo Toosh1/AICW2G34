@@ -8,7 +8,7 @@ import json
 from llama_cpp import Llama
 from dotenv import load_dotenv
 import nlp
-import routes 
+import services.national_rail.journey_planner as journey_planner 
 import knowledge_base as kb
 
 llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)
@@ -181,7 +181,7 @@ def fill_time_info(user_input):
     info["departure_time"] = outbound_time
 
 def ask_for_help():
-    route = routes.main(info["departure_station"].upper(), info["arrival_station"].upper())
+    route = journey_planner.main(info["departure_station"].upper(), info["arrival_station"].upper())
     crs_dep, crs_arr = kb.get_station_code_from_name(info["departure_station"].capitalize()), kb.get_station_code_from_name(info["arrival_station"].capitalize())
     print(info)
     

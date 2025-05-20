@@ -1,6 +1,8 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
 
+csv_file = 'src/data/csv/enhanced_stations.csv'
+
 namespaces = {
     'ns': 'http://nationalrail.co.uk/xml/station',
     'com': 'http://nationalrail.co.uk/xml/common',
@@ -88,5 +90,5 @@ def get_enhanced_stations() -> None:
         rows.append(get_row_data(station, ticket_hours))
 
     stations_df = pd.DataFrame(rows)
-    stations_df.to_csv('src/data/csv/enhanced_stations.csv', index=False)
-    print("Enhanced stations data has been saved to 'src/data/csv/enhanced_stations.csv'")
+    stations_df.to_csv(csv_file, index=False)
+    print(f"+ Stations data saved to {csv_file}")

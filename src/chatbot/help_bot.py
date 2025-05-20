@@ -9,7 +9,7 @@ import json
 from llama_cpp import Llama
 from dotenv import load_dotenv
 import nlp
-import routes 
+import services.national_rail.journey_planner as journey_planner 
 import knowledge_base as kb
 
 llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)

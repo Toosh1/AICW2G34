@@ -62,9 +62,9 @@ def extract_data(url: str, store: str, token: str) -> None:
     response = get_data(url, token)
     if response is not None:
         extract_response_contents(response, store)
-        print(f"Data extracted to {store}")
+        print(f"+ Data extracted to {store}")
     else:
-        print(f"Failed to fetch data from {url}")
+        print(f"* Failed to fetch data from {url}")
 
 def extract_all_data(token=None) -> None:
     """
