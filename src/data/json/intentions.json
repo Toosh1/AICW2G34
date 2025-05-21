@@ -99,7 +99,13 @@
             "reserve a ticket",
             "book a ticket",   
             "purchase a ticket",
-            "buy a ticket"
+            "buy a ticket",
+            "find me a ticket",
+            "before X",
+            "after X",
+            "from X",
+            "to X",
+            "returning from X"
         ],
         "responses": [
             "I can help you with ticket booking. Please provide your departure and destination stations.",
