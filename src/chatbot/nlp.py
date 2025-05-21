@@ -86,7 +86,6 @@ def add_station_entity_ruler() -> None:
 
     # Remove any overlapping names
     places = places.difference(stations)
-
     station_patterns = [{"label": "STATION", "pattern": station.upper()} for station in stations]
     place_patterns = [{"label": "PLACE", "pattern": place.upper()} for place in places]
 
@@ -294,19 +293,19 @@ def get_station_data(text: str) -> tuple:
     :return: A tuple containing the departure and arrival stations and similar stations.
     """
 
-    text = preprocess_text(text, nlp, True, True)
     text = preprocess_text(text, nlp, True, False).upper()
     doc = nlp(text)
     
     # Modify the text, based off the tense of the text and re-process
     text = modify_tenses(doc)
+    
     doc = nlp(text)
 
     # Apply the matcher to the document
     matches = preposition_matcher(doc)
     departure = None
     arrival = None
-
+    
     for _, start, end in matches:
         span = doc[start:end]
         departure = extract_station(departure, span.text.lower(), departure_terms)
@@ -372,3 +371,4 @@ if __name__ == "__main__":
         print(f"Outbound Date: {outbound_date}")
         print(f"Inbound Date: {inbound_date}")
         print("--" * 30)
+
