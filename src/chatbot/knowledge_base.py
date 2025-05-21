@@ -84,6 +84,8 @@ def get_departures(from_tpl: str) -> list[str]:
         rows = cur.fetchall()
         return [row[0] for row in rows]
 
+#region AWS Departure Table Creation ---
+
 def create_departure_table() -> None:
     with conn.cursor() as cur:
         # Delete the table if it exists
