@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import nlp
 import services.national_rail.journey_planner as journey_planner 
 import knowledge_base as kb
+import interface
 
 llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)
 messages = [""]
@@ -78,15 +79,14 @@ def llm_generate_question():
     chat_question = llm.create_chat_completion(messages)
     llm_question = chat_question["choices"][0]["message"]["content"]
     append_message("assistant", chat_question)
+    interface.add_message(llm_question, is_user=False)
     print(f"\033[93mPisces: {llm_question}\033[0m")
 
     
 def main():
+    interface.main()
     messages[0] = generic_prompt_builder()
-    while True:
-        user_input = ask_user()
-        intent = nlp.get_intent(user_input)
-        
+    llm_generate_question()  
 
 
 if __name__ == "__main__":
