@@ -16,7 +16,7 @@ def test_correct_spelling(input_word, expected) -> None:
 
 @pytest.mark.parametrize("input_text, expected", [
     ("I recieve teh message", "i receive the message"),
-    ("I am arriving at 9pm", "i be arrive at 9:00 am")
+    ("I am arriving at 9pm", "i be arrive at 9:00 pm")
 ])
 def test_preprocess_text_with_spell_check(input_text, expected) -> None:
     assert preprocess_text(input_text, nlp, True, True) == expected
