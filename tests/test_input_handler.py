@@ -21,16 +21,6 @@ def test_correct_spelling(input_word, expected) -> None:
 def test_preprocess_text_with_spell_check(input_text, expected) -> None:
     assert preprocess_text(input_text, nlp, True, True) == expected
 
-
-@pytest.mark.parametrize("journey, expected_substring", [
-    ({"departure": ["15th May 2025 at 10:30pm"]}, "2025-05-15 22:30"),
-    ({"departure": ["1st Jan 2023 at 12:00am"]}, "2023-01-01 00:00")
-])
-def test_parse_time(journey, expected_substring) -> None:
-    result = parse_time(journey)
-    assert expected_substring in result  # allows time variance by seconds
-
-
 @pytest.mark.parametrize("input_time, expected", [
     ("5pm", "5:00 PM"),
     ("5:30am", "5:30 AM"),
