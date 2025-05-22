@@ -85,7 +85,6 @@ def add_station_entity_ruler() -> None:
 
     # Remove any overlapping names
     places = places.difference(stations)
-
     station_patterns = [{"label": "STATION", "pattern": station.upper()} for station in stations]
     place_patterns = [{"label": "PLACE", "pattern": place.upper()} for place in places]
 
@@ -141,36 +140,6 @@ def get_intent(text: str) -> tuple:
     proability = clf.predict_proba([text])
     return prediction[0], proability
 
-def extract_split_term(text: str, variations: list) -> str:
-    return min(
-        variations,
-        key=lambda variation: abs(
-            len([ent for ent in nlp(text.split(variation)[0]).ents if ent.label_ in TIME_ENTITIES]) -
-            len([ent for ent in nlp(text.split(variation)[1]).ents if ent.label_ in TIME_ENTITIES])
-        ),
-        default=None
-    )
-
-def extract_date_and_time(text: str) -> dict:
-    """
-    Extract date and time from the text using spaCy's NER.
-    :param text: The input text to search for date and time.
-    :return: A dictionary containing date and time.
-    """
-
-    # Get the entities from the text
-    doc = nlp(text)
-
-    # Ignore if no entities are found
-
-    journey = {"DATE": [], "TIME": []}
-
-    for ent in doc.ents:
-        if ent.label_ in TIME_ENTITIES:
-            journey["DATE" if ent.label_ != "TIME" else "TIME"].append(ent.text)
-
-    return journey
-
 def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
     doc = nlp(text)
     matches = constraint_matcher(doc)
@@ -193,6 +162,69 @@ def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
         return ["ARRIVING"]
 
     return ["DEPARTING"]
+
+def get_time_constraints(text: str, split_index: tuple, departure: str, arrival: str) -> str:
+    """
+    Extract the time from the text using regex.
+    :param text: The input text to search for time.
+    :return: The extracted time or None if not found.
+    """
+
+    text = preprocess_text(text, nlp, True, True)
+    variation, index = split_index
+    split_text = [text[:index], text[index + len(variation):]] if variation else [text]
+
+    # Loop through the split text and extract time constraints
+    constraints = []
+    for segment in split_text:
+        if constraint := extract_time_constraints(segment, departure, arrival):
+            constraints.extend(constraint)
+    constraints = [c for c in constraints if c is not None]
+
+    constraints.extend(["DEPARTING", "DEPARTING"])
+    constraints = constraints[:2]
+
+    return constraints
+
+def extract_date_and_time(text: str) -> dict:
+    """
+    Extract date and time from the text using spaCy's NER.
+    :param text: The input text to search for date and time.
+    :return: A dictionary containing date and time.
+    """
+
+    # Get the entities from the text
+    doc = nlp(text)
+
+    # Ignore if no entities are found
+
+    journey = {"DATE": [], "TIME": []}
+
+    for ent in doc.ents:
+        if ent.label_ in TIME_ENTITIES:
+            journey["DATE" if ent.label_ != "TIME" else "TIME"].append(ent.text)
+
+    return journey
+
+def get_journey_times(text: str, split_index: tuple) -> tuple:
+    """
+    Extract date and time from the text using regex.
+    :param text: The input text to search for date and time.
+    :param return_variations: List of return ticket variations.
+    :return: A tuple containing date and time for first and second journeys.
+    """
+
+    variation, index = split_index
+    split_text = [text[:index], text[index + len(variation):]] if variation else [text]
+
+    journeys = []
+
+    # Loop through the split text and extract date and time
+    for segment in split_text:
+        if journey := extract_date_and_time(segment):
+            journeys.append(journey)
+
+    return journeys[0] if journeys else None, journeys[1] if len(journeys) > 1 else None
 
 def find_closest_stations(query: str) -> list:
     """
@@ -222,47 +254,6 @@ def extract_station(type: str, text: str, terms: list) -> str:
             return re.sub(rf"\b{re.escape(term)}\b", "", text, count=1, flags=re.IGNORECASE).strip()
     return None
 
-def get_time_constraints(text: str, return_phrase: str, departure: str, arrival: str) -> str:
-    """
-    Extract the time from the text using regex.
-    :param text: The input text to search for time.
-    :return: The extracted time or None if not found.
-    """
-
-    text = preprocess_text(text, nlp, True, True)
-    split_text = text.split(return_phrase) if return_phrase else [text]
-
-    # Loop through the split text and extract time constraints
-    constraints = []
-    for segment in split_text:
-        if constraint := extract_time_constraints(segment, departure, arrival):
-            constraints.extend(constraint)
-    constraints = [c for c in constraints if c is not None]
-
-    constraints.extend(["DEPARTING", "DEPARTING"])
-    constraints = constraints[:2]
-
-    return constraints
-
-def get_journey_times(text: str, return_phase: str) -> tuple:
-    """
-    Extract date and time from the text using regex.
-    :param text: The input text to search for date and time.
-    :param return_variations: List of return ticket variations.
-    :return: A tuple containing date and time for first and second journeys.
-    """
-
-    split_text = text.split(return_phase) if return_phase else [text]
-
-    journeys = []
-
-    # Loop through the split text and extract date and time
-    for segment in split_text:
-        if journey := extract_date_and_time(segment):
-            journeys.append(journey)
-
-    return journeys[0] if journeys else None, journeys[1] if len(journeys) > 1 else None
-
 def get_station_data(text: str) -> tuple:
     """
     Extract train information from the user input using spaCy's matcher.
@@ -270,19 +261,19 @@ def get_station_data(text: str) -> tuple:
     :return: A tuple containing the departure and arrival stations and similar stations.
     """
 
-    text = preprocess_text(text, nlp, True, True)
     text = preprocess_text(text, nlp, True, False).upper()
     doc = nlp(text)
     
     # Modify the text, based off the tense of the text and re-process
     text = modify_tenses(doc)
+    
     doc = nlp(text)
 
     # Apply the matcher to the document
     matches = preposition_matcher(doc)
     departure = None
     arrival = None
-
+    
     for _, start, end in matches:
         span = doc[start:end]
         departure = extract_station(departure, span.text.lower(), departure_terms)
@@ -309,6 +300,37 @@ def extract_single_station(text: str) -> None:
             return ent.text
     return None
 
+def extract_best_split_index(text: str, variations: list[str]) -> tuple[str, int]:
+    best_variation = None
+    best_index = None
+    min_diff = float('inf')
+
+    for variation in variations:
+        # Use regex to find all case-insensitive matches of the variation
+        for match in re.finditer(re.escape(variation), text, flags=re.IGNORECASE):
+            index = match.start()
+
+            # Split text at this instance
+            left = text[:index]
+            right = text[index + len(variation):]
+
+            # Count time entities
+            left_time_count = len([ent for ent in nlp(left).ents if ent.label_ in TIME_ENTITIES])
+            right_time_count = len([ent for ent in nlp(right).ents if ent.label_ in TIME_ENTITIES])
+
+            diff = abs(left_time_count - right_time_count)
+
+            # Choose the split with the smallest time entity count difference
+            if diff < min_diff:
+                best_variation = variation
+                best_index = index
+                min_diff = diff
+
+    if best_variation is not None:
+        return best_variation, best_index
+
+    return None, None
+
 def get_return_ticket(text: str) -> str:
     """
     Extract if the user is looking for a return ticket.
@@ -320,7 +342,7 @@ def get_return_ticket(text: str) -> str:
     doc = nlp(text)
     matches = return_matcher(doc)
     variations = [doc[start:end].text.lower() for _, start, end in matches]
-    return extract_split_term(text, variations)
+    return extract_best_split_index(text, variations)
 
 setup()
 
@@ -330,12 +352,13 @@ if __name__ == "__main__":
 
     while True:
         user_input = input("You: ")
-        return_phrase = get_return_ticket(user_input)
-        departure, arrival, similar_stations = get_station_data(user_input)
-        outbound, inbound = get_journey_times(user_input, return_phrase)
-        time_constraints = get_time_constraints(user_input, return_phrase, departure, arrival)
         intent, confidence = get_intent(user_input)
-        print(f"Return Phrases: {return_phrase}")
+        split_index = get_return_ticket(user_input)
+        departure, arrival, similar_stations = get_station_data(user_input)
+        outbound, inbound = get_journey_times(user_input, split_index)
+        time_constraints = get_time_constraints(user_input, split_index, departure, arrival)
+        outbound_date, inbound_date = parse_journey_times(outbound, inbound)
+        print(f"Return Phrases: {split_index}")
         print(f"Departure: {departure}")
         print(f"Arrival: {arrival}")
         print(f"Similar Stations: {similar_stations}")
@@ -343,5 +366,8 @@ if __name__ == "__main__":
         print(f"Inbound: {inbound}")
         print(f"Time Constraints: {time_constraints}")
         print(f"Intent: {intent}")
-        print(f"Confidence: {confidence}")
+        print(f"Confidence: {confidence.max()}")
+        print(f"Outbound Date: {outbound_date}")
+        print(f"Inbound Date: {inbound_date}")
         print("--" * 30)
+

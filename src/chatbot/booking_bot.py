@@ -1,115 +1,111 @@
-'''
-This module contains the reasoning engine for the chatbot.
-The reasoning engine will be responsible for asking the user for information
-and storing it in the info dictionary.
-'''
+import tkinter as tk
+from datetime import datetime
 import os
-import json
+import threading
 from llama_cpp import Llama
 from dotenv import load_dotenv
 import nlp
-import services.national_rail.journey_planner as journey_planner 
-import knowledge_base as kb
 
+load_dotenv()
 llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)
-messages = [""]
 
-# Info memory
+# Global variables
+messages = [""]
 info = {
     "departure_station": None,
     "arrival_station": None,
     "departure_time": None,
     "departure_date": None,
 }
+current_stage = "ask_info"
+chat_canvas_frame = None
+chat_frame = None
 
-def help_prompt_builder(station_info: str):
-    message = {
-        "role": "system",
-        "content": (
-            "You are a railway assistant who is helping a user, you know this information about a station, if a user asks you about a station, please provide the information below.\n"
-            "(HIGH IMPORTANCE) If the information provided does not answer the user's question, please apologize and tell them you do not know.\n"
-            + station_info + "\n"
-        )
-    }
-    return message
+# --- Chat Functionality ---
+def append_message(role, message):
+    messages.append({"role": role, "content": message})
 
+def add_message(text, is_user):
+    time_sent = datetime.now().strftime('%H:%M')
+    msg_container = tk.Frame(chat_canvas_frame, bg="#F0F0F0")
+    msg_container.pack(fill='x', pady=2, padx=10, anchor='e' if is_user else 'w')
+
+    msg_bg = "#a0d8ef" if is_user else "#e0e0e0"
+    justify = "right" if is_user else "left"
+
+    msg = tk.Label(
+        msg_container,
+        text=text,
+        padx=10,
+        pady=7,
+        bg=msg_bg,
+        fg="black",
+        wraplength=340,
+        justify=justify,
+        anchor='w',
+        font=("Arial", 11)
+    )
+    msg.pack(side='right' if is_user else 'left', anchor='e' if is_user else 'w')
+
+    timestamp = tk.Label(
+        msg_container,
+        text=time_sent,
+        bg="#F0F0F0",
+        fg="#818181",
+        font=("Arial", 8),
+        padx=5
+    )
+    timestamp.pack(anchor='e' if is_user else 'w')
+
+    chat_frame.update_idletasks()
+    chat_frame.yview_moveto(1.0)
+
+def llm_generate_question_async():
+    typing_label = tk.Label(chat_canvas_frame, text="Pisces is typing...", fg="gray", font=("Arial", 10, "italic"), bg="#F0F0F0")
+    typing_label.pack(anchor='w', padx=10, pady=2)
+    chat_frame.update_idletasks()
+
+    def generate():
+        chat_question = llm.create_chat_completion(messages)
+        llm_response = chat_question["choices"][0]["message"]["content"]
+        append_message("assistant", llm_response)
+        typing_label.destroy()
+        add_message(llm_response, is_user=False)
+
+    threading.Thread(target=generate).start()
+
+# --- Prompt Builders ---
 def generic_prompt_builder(keys):
-    message = {
+    return {
         "role": "system",
         "content": (
-            "You are a railway assistant who is helping a user who is trying to book a train ticket. Please be kind and polite but stick to the instruction below.\n"
-            "(HIGH IMPORTANCE) Only ask the user for the following nothing extra:\n"
-            + "\n".join(f"- {key}" for key in keys if info[key] is None)
+            "You are a railway assistant helping a user book a ticket. "
+            "Please ask for only the following missing info:\n" +
+            "\n".join(f"- {key}" for key in keys if info[key] is None)
         )
     }
-    return message
 
 def specific_prompt_builder(goal):
-    message = {
+    return {
         "role": "system",
-        "content": (
-            "You are a railway assistant who is helping a user who is trying to book a train ticket. Please be kind and keep messages relatively straight forward but stick to the instruction below.\n"
-            "(HIGH IMPORTANCE) Only ask the user for the following singular piece of information`:\n"
-            + goal
-        )
+        "content": f"Ask the user only for: {goal}"
     }
-    return message
 
 def incorrect_station_prompt_builder(close_stations):
     suggestion = ", ".join(close_stations[1])
-    message = {
+    return {
         "role": "system",
-        "content": (
-            f"You are a railway assistant who is helping a user who is trying to book a train ticket, do not give the user any information about the trip keep messages straightforward. Please be kind and polite but stick to the instruction below.\n"
-            f"(HIGH IMPORTANCE) The user has entered a station that does not exist: '{close_stations[0]}'. However, these stations do exist: {suggestion}. Ask the user to clarify"
-        )
+        "content": f"The station '{close_stations[0]}' was not recognized. Try: {suggestion}."
     }
-    return message
 
-def two_stations_prompt_builder(close_stations):
-
-    message = {
-        "role": "system",
-        "content": (
-            "You are a railway assistant who is helping a user who is trying to book a train ticket. Please be kind and polite but stick to the instruction below.\n"
-            "(HIGH IMPORTANCE) The user has entered incorrect stations " + {close_stations[0]} +", please ask for a correction with the following suggestions: "
-            
-        )
-    }
-    return message
-
-def please_try_again():
-    message = {
-        "role": "system",
-        "content": (
-            "You are a railway assistant who is helping a user who is trying to book a train ticket. Please be kind and polite but stick to the instruction below.\n"
-            "(HIGH IMPORTANCE) The user has entered another station that does not exist. Please ask for a correction."
-        )
-    }
-    return message
-
-def append_message(role,message):
-    messages.append({"role": role, "content": message})
-
-def ask_user():
-    user_input = input("\nYou: ")
-    append_message("user",user_input)
-    return user_input
-
-def llm_generate_question():
-    chat_question = llm.create_chat_completion(messages)
-    llm_question = chat_question["choices"][0]["message"]["content"]
-    append_message("assistant", chat_question)
-    print(f"\033[93mPisces: {llm_question}\033[0m")
-
-def fill_station_info(user_input):
+# --- NLP Integration ---
+def fill_station_info_gui(user_input):
     departure, arrival, similar_stations = nlp.get_station_data(user_input)
+
     if not departure and not arrival:
-        messages[0] = two_stations_prompt_builder((user_input, similar_stations))
-        llm_generate_question()
-        corrected_input = ask_user()
-        fill_station_info(corrected_input)
-        return
+        messages[0] = incorrect_station_prompt_builder((user_input, similar_stations))
+        llm_generate_question_async()
+        return False
 
     if departure:
         info["departure_station"] = departure
@@ -118,90 +114,104 @@ def fill_station_info(user_input):
 
     if similar_stations != [None]:
         if not info.get("departure_station"):
-            while not info.get("departure_station"):
-                if similar_stations:
-                    messages[0] = incorrect_station_prompt_builder(similar_stations[0])
-                    llm_generate_question()
-                    corrected_input = ask_user()
-                    station = nlp.extract_single_station(corrected_input)
-                    if station:
-                        info["departure_station"] = station
-                        break
-                    else:
-                        messages[0] = please_try_again()
-                        llm_generate_question()
-                        corrected_input = ask_user()
-
+            messages[0] = incorrect_station_prompt_builder(similar_stations[0])
+            llm_generate_question_async()
+            return False
         if not info.get("arrival_station"):
-            while not info.get("arrival_station"):
-                if similar_stations:
-                    messages[0] = incorrect_station_prompt_builder(similar_stations[0])
-                    llm_generate_question()
-                    corrected_input = ask_user()
-                    station = nlp.extract_single_station(corrected_input)
-                    if station:
-                        info["arrival_station"] = station
-                        break
-                    else:
-                        messages[0] = please_try_again()
-                        llm_generate_question()
-                        corrected_input = ask_user()
+            messages[0] = incorrect_station_prompt_builder(similar_stations[0])
+            llm_generate_question_async()
+            return False
 
-def fill_time_info(user_input):
-    return_phrase = nlp.get_return_ticket(user_input)
+    return True
+
+def fill_time_info_gui(user_input):
     outbound = nlp.extract_date_and_time(user_input)
-    print(outbound)
     outbound_date, outbound_time = outbound["DATE"], outbound["TIME"]
-    while not outbound_date or not outbound_time:
+
+    if not outbound_date or not outbound_time:
         if not outbound_date and not outbound_time:
             messages[0] = specific_prompt_builder("departure date and time")
-            llm_generate_question()
-            corrected_input = ask_user()
-            outbound = nlp.extract_date_and_time(corrected_input)
-            print(outbound)
-            outbound_date = outbound["DATE"]
-            outbound_time = outbound["TIME"]
-        if not outbound_date:   
+        elif not outbound_date:
             messages[0] = specific_prompt_builder("departure date")
-            llm_generate_question()
-            corrected_input = ask_user()
-            outbound = nlp.extract_date_and_time(corrected_input)
-            print(outbound)
-            outbound_date = outbound["DATE"]
-
-        if not outbound_time:
+        elif not outbound_time:
             messages[0] = specific_prompt_builder("departure time")
-            llm_generate_question()
-            corrected_input = ask_user()
-            outbound = nlp.extract_date_and_time(corrected_input)
-            print(outbound)
-            outbound_time = outbound["TIME"]
+        llm_generate_question_async()
+        return False
 
     info["departure_date"] = outbound_date
     info["departure_time"] = outbound_time
+    return True
 
-def ask_for_help():
-    route = journey_planner.main(info["departure_station"].upper(), info["arrival_station"].upper())
-    crs_dep, crs_arr = kb.get_station_code_from_name(info["departure_station"].capitalize()), kb.get_station_code_from_name(info["arrival_station"].capitalize())
-    print(info)
-    
-    information = kb.get_all_station_details(crs_dep) + kb.get_all_station_details(crs_arr)
-    print(information)
-    messages[0] = help_prompt_builder(information)
-    while True:
-        llm_generate_question()
-        ask_user()
+# --- Chat Controller ---
+def send_message():
+    global current_stage
+    user_input = entry_box.get().strip()
+    if user_input == "":
+        return
 
+    add_message(user_input, is_user=True)
+    entry_box.delete(0, tk.END)
+    append_message("user", user_input)
 
-def main():
-    #Firstly ask the user for all basic information , departure station, arrival station and departure time
+    if current_stage == "ask_info":
+        if fill_station_info_gui(user_input):
+            if info["departure_station"] and info["arrival_station"]:
+                current_stage = "ask_time"
+                messages[0] = specific_prompt_builder("departure date and time")
+                llm_generate_question_async()
+        return
+
+    if current_stage == "ask_time":
+        if fill_time_info_gui(user_input):
+            add_message("Thank you! I now have all the details I need to plan your trip.", is_user=False)
+            current_stage = "done"
+        return
+
+# --- GUI Main ---
+def gui_main():
+    global root, chat_frame, chat_canvas_frame, entry_box
+
+    root = tk.Tk()
+    root.title("Pisces: Train Chatbot")
+    root.geometry("420x580")
+    root.configure(bg="#F0F0F0")
+
+    # Chat display
+    container = tk.Frame(root, bg="#F0F0F0")
+    container.pack(fill=tk.BOTH, expand=True)
+
+    chat_frame = tk.Canvas(container, bg="#F0F0F0", highlightthickness=0)
+    chat_scrollbar = tk.Scrollbar(container, command=chat_frame.yview)
+    chat_frame.configure(yscrollcommand=chat_scrollbar.set)
+
+    chat_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    chat_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    chat_canvas_frame = tk.Frame(chat_frame, bg="#F0F0F0")
+    chat_frame.create_window((0, 0), window=chat_canvas_frame, anchor='nw')
+
+    def on_configure(event):
+        chat_frame.configure(scrollregion=chat_frame.bbox("all"))
+        chat_frame.yview_moveto(1.0)
+
+    chat_canvas_frame.bind("<Configure>", on_configure)
+
+    # Bottom input
+    bottom_frame = tk.Frame(root, bg="white", padx=10, pady=10)
+    bottom_frame.pack(fill=tk.X, side=tk.BOTTOM)
+
+    entry_box = tk.Entry(bottom_frame, font=("Arial", 12))
+    entry_box.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+    entry_box.bind("<Return>", lambda event: send_message())
+
+    send_button = tk.Button(bottom_frame, text="Send", command=send_message, font=("Arial", 10))
+    send_button.pack(side=tk.RIGHT)
+
+    # Start conversation
     messages[0] = generic_prompt_builder(info.keys())
-    llm_generate_question()
-    user_input = ask_user()
-    fill_station_info(user_input)
-    fill_time_info(user_input)
-    print(info)
-    ask_for_help()
+    llm_generate_question_async()
+
+    root.mainloop()
 
 if __name__ == "__main__":
-    main()
+    gui_main()

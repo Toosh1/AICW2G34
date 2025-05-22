@@ -8,3 +8,5 @@ requests
 pandas
 pytest
 psycopg
+scikit-learn
+beautifulsoup4

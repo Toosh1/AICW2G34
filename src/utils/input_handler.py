@@ -121,28 +121,31 @@ def preprocess_text(text: str, nlp: object, spell_check: bool = True, lemma: boo
     return cleaned_text.lower()
 
 
-def parse_time(journey: dict[str, str]) -> str:
-    """
-    Parse the time from the journey dictionary.
-    :param journey: The dictionary containing the time information.
-    :return: The parsed time in the format 'YYYY-MM-DD HH:MM:SS'.
-    """
-    parsed_date = datetime.now()
+def parse_datestring(date_string: str, current_date) -> str:
+    settings = {
+        "PREFER_DATES_FROM": "future",
+        "RELATIVE_BASE": current_date,
+        "TIMEZONE": "GMT",
+        "DATE_ORDER": "DMY",
+    }
+    result = dateparser.parse(date_string, settings=settings)
+    return result if result else current_date
 
-    for key in journey.keys():
-        for value in journey[key]:
-            settings = {
-                "PREFER_DATES_FROM": "future",
-                "RELATIVE_BASE": parsed_date,
-                "TIMEZONE": "GMT",
-                "DATE_ORDER": "DMY",
-            }
-            result = dateparser.parse(value, settings=settings)
-            if not result:
-                continue
-            parsed_date = result
-    return parsed_date.strftime("%Y-%m-%d %H:%M:%S")
+def parse_journey_dict(journey_dict: dict, current_date) -> tuple:
+    for key in journey_dict:
+        datestring = " ".join(journey_dict.get(key, []))
+        current_date = parse_datestring(datestring, current_date)
+    return current_date
 
+def parse_journey_times(outbound: dict, inbound: dict) -> tuple:
+    current_date = datetime.now()
+    outbound_date = parse_journey_dict(outbound, current_date)
+    
+    if not inbound:
+        return outbound_date, None
+
+    inbound_date = parse_journey_dict(inbound, outbound_date)
+    return outbound_date, inbound_date
 
 def process_station_name(station_name: str, nlp) -> list:
     """
