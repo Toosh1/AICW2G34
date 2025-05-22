@@ -1,6 +1,4 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import  KNeighborsRegressor
 from sklearn.metrics import mean_squared_error, r2_score
@@ -11,9 +9,13 @@ df = pd.read_csv("../data/2024_service_details_Norwich_to_London.csv")
 print(df.head())
 
 def time_to_minutes(t):
+    """
+    Parses time from HH:MM format to hours and minutes (separated)
+    """
     h, m = map(int, t.split(':'))
     return h * 60 + m
 
+# Drops any rows with missing planned_departure_time or actual_arrival_time fields
 df.dropna(subset=['planned_departure_time', 'actual_arrival_time'], inplace=True)
 
 df['planned_departure_time'] = df['planned_departure_time'].apply(time_to_minutes)
@@ -55,6 +57,9 @@ plt.legend()
 plt.show()
 
 def predict_delay_for_time(departure_time_str):
+    """
+    Predicts delay for given departure time (in format HH:MM)
+    """
     h, m = map(int, departure_time_str.split(':'))
     departure_minutes = h * 60 + m
 
