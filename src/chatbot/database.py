@@ -1,10 +1,23 @@
 import json
 
-responses = {}
-extraction_patterns = {}
-
 RESPONSES_PATH = "./src/data/json/intentions.json"
 EXTRACTION_PATH = "./src/data/json/extraction_patterns.json"
+CONSTRAINTS_path = "./src/data/json/constraints.json"
+
+responses = {}
+extraction_patterns = {}
+constraints = {}
+
+def load_constraints() -> dict[str, list]:
+    """
+    Load constraints from a JSON file into a dictionary.
+    :return: A dictionary where the keys are constraint types and the values are lists of patterns.
+    """
+    global constraints
+    if not constraints:
+        with open(CONSTRAINTS_path, mode="r") as file:
+            constraints = json.load(file)
+    return constraints
 
 def load_responses() -> dict[str, str]:
     """
@@ -148,5 +161,16 @@ def get_training_responses_and_labels() -> list:
             intent_labels.append(key)
     return training_sentences, intent_labels
 
+def get_constraint_training_responses_and_labels() -> list:
+    training_sentences = []
+    intent_labels = []
+    
+    for key in constraints:
+        for pattern in constraints[key]:
+            training_sentences.append(pattern)
+            intent_labels.append(key)
+    return training_sentences, intent_labels
+
 responses = load_responses()
 extraction_patterns = load_patterns()
+constraints = load_constraints()

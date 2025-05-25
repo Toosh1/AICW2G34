@@ -34,22 +34,26 @@ from utils.input_handler import *
 nlp = spacy.load("en_core_web_sm")
 
 # Create pipeline
-clf = Pipeline([
+intent_classifier = Pipeline([
+    ("vectorizer", TfidfVectorizer()),
+    ("classifier", LogisticRegression())
+])
+
+constraint_classifier = Pipeline([
     ("vectorizer", TfidfVectorizer()),
     ("classifier", LogisticRegression())
 ])
 
 preposition_matcher = None
-constraint_matcher = None
 return_matcher = None
 
 TIME_ENTITIES = ["TIME", "DATE", "ORDINAL", "SERIES", "MONTH"]
-TIME_CONSTRAINTS = ["DEPARTING", "ARRIVING"]
 departure_terms = get_prepositions("departure")
 arrival_terms = get_prepositions("arrival")
 
 
 #------Setup the NLP pipeline------
+
 def setup() -> None:
     add_stations_to_vocab()
     add_to_vocabulary(get_dates())
@@ -57,6 +61,7 @@ def setup() -> None:
     add_station_entity_ruler()
     add_matcher_patterns()
     train_intent_classifier()
+    train_constraint_classifier()
 
 def add_stations_to_vocab() -> None:
     """
@@ -111,22 +116,23 @@ def add_matcher_patterns() -> None:
     The patterns are defined in the knowledge base.
     :return: None
     """
-    global constraint_matcher, preposition_matcher, return_matcher
+    global preposition_matcher, return_matcher
 
-    constraint_matcher = Matcher(nlp.vocab)
     preposition_matcher = Matcher(nlp.vocab)
     return_matcher = Matcher(nlp.vocab)
 
     preposition_matcher.add("PREPOSITIONS", get_extraction_patterns(), greedy="LONGEST")
-    constraint_matcher.add("GENERAL", [get_default_time_constraint()], greedy="LONGEST")
-    constraint_matcher.add("DEPARTING", get_depart_after_patterns(), greedy="LONGEST")
-    constraint_matcher.add("ARRIVING", get_arrive_before_patterns(), greedy="LONGEST")
     return_matcher.add("RETURN", get_return_patterns(), greedy="LONGEST")
 
 def train_intent_classifier() -> None:
-    global clf
+    global intent_classifier
     training_sentences, intent_labels = get_training_responses_and_labels()
-    clf.fit(training_sentences, intent_labels)
+    intent_classifier.fit(training_sentences, intent_labels)
+
+def train_constraint_classifier() -> None:
+    global constraint_classifier
+    training_sentences, constraint_labels = get_constraint_training_responses_and_labels()
+    constraint_classifier.fit(training_sentences, constraint_labels)
 
 #------Text Preprocessing Functions------
 
@@ -136,34 +142,21 @@ def get_intent(text: str) -> tuple:
     :param text: The input text from the user.
     :return: The predicted intent label.
     """
-    prediction = clf.predict([text])
-    proability = clf.predict_proba([text])
-    return prediction[0], proability
+    prediction = intent_classifier.predict([text])
+    proability = intent_classifier.predict_proba([text])
+    return str(prediction[0]), proability
 
-def extract_time_constraints(text: str, departure: str, arrival: str) -> str:
-    doc = nlp(text)
-    matches = constraint_matcher(doc)
+def get_constraint(text: str) -> tuple:
+    """
+    Get the time constraint from the user input using the trained classifier.
+    :param text: The input text from the user.
+    :return: The predicted time constraint label.
+    """
+    prediction = constraint_classifier.predict([text])
+    proability = constraint_classifier.predict_proba([text])
+    return str(prediction[0]), proability
 
-    patterns = [nlp.vocab.strings[match_id] for match_id, _, _ in matches if nlp.vocab.strings[match_id] in TIME_CONSTRAINTS]
-
-    if len(patterns) > 0:
-        return patterns
-
-    # Check for matches
-    if not matches:
-        return None
-
-    # If the departing station is found in the text, return "DEPART"
-    if departure is not None and departure in text:
-        return ["DEPARTING"]
-
-    # If the arrival station is found in the text, return "ARRIVE"
-    if arrival is not None and arrival in text:
-        return ["ARRIVING"]
-
-    return ["DEPARTING"]
-
-def get_time_constraints(text: str, split_index: tuple, departure: str, arrival: str) -> str:
+def get_time_constraints(text: str, split_index: tuple) -> str:
     """
     Extract the time from the text using regex.
     :param text: The input text to search for time.
@@ -173,17 +166,17 @@ def get_time_constraints(text: str, split_index: tuple, departure: str, arrival:
     text = preprocess_text(text, nlp, True, True)
     variation, index = split_index
     split_text = [text[:index], text[index + len(variation):]] if variation else [text]
+    constraints = ['DEPARTING', 'DEPARTING']
 
     # Loop through the split text and extract time constraints
-    constraints = []
-    for segment in split_text:
-        if constraint := extract_time_constraints(segment, departure, arrival):
-            constraints.extend(constraint)
-    constraints = [c for c in constraints if c is not None]
-
-    constraints.extend(["DEPARTING", "DEPARTING"])
-    constraints = constraints[:2]
-
+    for i in range(len(split_text)):
+        segment = split_text[i]
+        constraint, _ = get_constraint(segment)
+        constraints[i] = constraint if constraint else constraints[i]
+    
+    # Fill in missing constraints with 'DEPARTING'
+    constraints.extend(['DEPARTING'] * (2 - len(constraints)))
+    
     return constraints
 
 def extract_date_and_time(text: str) -> dict:
@@ -356,7 +349,7 @@ if __name__ == "__main__":
         split_index = get_return_ticket(user_input)
         departure, arrival, similar_stations = get_station_data(user_input)
         outbound, inbound = get_journey_times(user_input, split_index)
-        time_constraints = get_time_constraints(user_input, split_index, departure, arrival)
+        time_constraints = get_time_constraints(user_input, split_index)
         outbound_date, inbound_date = parse_journey_times(outbound, inbound)
         print(f"Return Phrases: {split_index}")
         print(f"Departure: {departure}")
