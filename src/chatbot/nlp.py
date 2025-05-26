@@ -43,6 +43,11 @@ constraint_classifier = Pipeline([
     ("classifier", LogisticRegression())
 ])
 
+faq_classifier = Pipeline([
+    ("vectorizer", TfidfVectorizer()),
+    ("classifier", LogisticRegression())
+])
+
 preposition_matcher = None
 return_matcher = None
 
@@ -61,6 +66,7 @@ def setup() -> None:
     add_matcher_patterns()
     train_intent_classifier()
     train_constraint_classifier()
+    train_faq_classifier()
 
 def add_stations_to_vocab() -> None:
     """
@@ -125,35 +131,31 @@ def add_matcher_patterns() -> None:
 
 def train_intent_classifier() -> None:
     global intent_classifier
-    training_sentences, intent_labels = get_training_responses_and_labels()
+    training_sentences, intent_labels = get_intentions_training_data()
     intent_classifier.fit(training_sentences, intent_labels)
 
 def train_constraint_classifier() -> None:
     global constraint_classifier
-    training_sentences, constraint_labels = get_constraint_training_responses_and_labels()
+    training_sentences, constraint_labels = get_constraint_training_data()
     constraint_classifier.fit(training_sentences, constraint_labels)
+
+def train_faq_classifier() -> None:
+    global faq_classifier
+    training_sentences, faq_labels = get_faq_training_data()
+    faq_classifier.fit(training_sentences, faq_labels)
 
 #------Text Preprocessing Functions------
 
-def get_intent(text: str) -> tuple:
+def predict_classifier(text: str, classifier: Pipeline) -> tuple:
     """
-    Get the intent of the user input using the trained classifier.
-    :param text: The input text from the user.
-    :return: The predicted intent label.
+    Predict the intent or constraint of the input text using the specified classifier.
+    :param text: The input text to classify.
+    :param classifier: The classifier to use for prediction.
+    :return: A tuple containing the predicted label and its probability.
     """
-    prediction = intent_classifier.predict([text])
-    proability = intent_classifier.predict_proba([text])
-    return str(prediction[0]), proability
-
-def get_constraint(text: str) -> tuple:
-    """
-    Get the time constraint from the user input using the trained classifier.
-    :param text: The input text from the user.
-    :return: The predicted time constraint label.
-    """
-    prediction = constraint_classifier.predict([text])
-    proability = constraint_classifier.predict_proba([text])
-    return str(prediction[0]), proability
+    prediction = classifier.predict([text])
+    probability = classifier.predict_proba([text])
+    return str(prediction[0]), probability
 
 def get_time_constraints(text: str, split_index: tuple) -> str:
     """
@@ -170,7 +172,7 @@ def get_time_constraints(text: str, split_index: tuple) -> str:
     # Loop through the split text and extract time constraints
     for i in range(len(split_text)):
         segment = split_text[i]
-        constraint, _ = get_constraint(segment)
+        constraint, _ = predict_classifier(segment, constraint_classifier)
         constraints[i] = constraint if constraint else constraints[i]
     
     # Fill in missing constraints with 'DEPARTING'
@@ -344,7 +346,8 @@ if __name__ == "__main__":
 
     while True:
         user_input = input("You: ")
-        intent, confidence = get_intent(user_input)
+        intent, confidence = predict_classifier(user_input, intent_classifier)
+        faq_intent, faq_confidence = predict_classifier(user_input, faq_classifier)
         split_index = get_return_ticket(user_input)
         departure, arrival, similar_stations = get_station_data(user_input)
         outbound, inbound = get_journey_times(user_input, split_index)
@@ -357,9 +360,12 @@ if __name__ == "__main__":
         print(f"Outbound: {outbound}")
         print(f"Inbound: {inbound}")
         print(f"Time Constraints: {time_constraints}")
+        print(f"Inbound Date: {inbound_date}")
         print(f"Intent: {intent}")
         print(f"Confidence: {confidence.max()}")
+        if intent == "station_faq":
+            print(f"FAQ Intent: {faq_intent}")
+            print(f"FAQ Confidence: {faq_confidence.max()}")
         print(f"Outbound Date: {outbound_date}")
-        print(f"Inbound Date: {inbound_date}")
         print("--" * 30)
 

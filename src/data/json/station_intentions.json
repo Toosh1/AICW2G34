@@ -1,0 +1,195 @@
+{
+    "platform_details": {
+        "patterns": [
+            "which platform does the train leave from?",
+            "where do I catch the train?",
+            "what platform is the train on?",
+            "can you tell me the platform number?",
+            "platform information for my train",
+            "I need the platform for my departure",
+            "train platform details"
+        ],
+        "responses": [
+            "I can help you find the platform. Please provide the train number or destination.",
+            "To find the platform, please let me know your train number or destination.",
+            "Could you tell me your train number or the destination so I can check the platform for you?",
+            "Please provide the destination or train number to get the platform information."
+        ]
+    },
+    "address_details": {
+        "patterns": [
+            "what is the address of the station?",
+            "can you give me the station location?",
+            "where exactly is the station?",
+            "I need the station address",
+            "station address information",
+            "how do I reach the station?",
+            "location details for the station"
+        ],
+        "responses": [
+            "I can help you find the address. Please provide the name of the place you're looking for.",
+            "To find an address, please tell me the name of the location.",
+            "Please share the name of the station or place you're interested in.",
+            "Let me know the place or station name so I can provide the address."
+        ]
+    },
+    "train_operator": {
+        "patterns": [
+            "who runs this train?",
+            "what company operates this train?",
+            "train operating company information",
+            "who is the operator of the train?",
+            "can you tell me the train operator?",
+            "which company provides this train service?",
+            "train service provider details"
+        ],
+        "responses": [
+            "I can help you find the train operator. Please provide the train number or route.",
+            "To find the train operator, please let me know the train number or route.",
+            "Please tell me the train number or the route you are interested in.",
+            "Could you share the train number or route so I can look up the operator?"
+        ]
+    },
+    "ticket_office_hours": {
+        "patterns": [
+            "when is the ticket office open?",
+            "what are the opening times for the ticket counter?",
+            "ticket office schedule",
+            "ticket counter hours",
+            "what time does the ticket office open and close?",
+            "ticket office working hours"
+        ],
+        "responses": [
+            "I can help you with ticket office hours. Please provide the station name.",
+            "To find ticket office hours, please tell me the name of the station.",
+            "Could you let me know the station name so I can check ticket office hours for you?",
+            "Please provide the station name to get the ticket office timings."
+        ]
+    },
+    "ticket_machine": {
+        "patterns": [
+            "is there a ticket machine available?",
+            "can I use a ticket machine to buy tickets?",
+            "where is the ticket vending machine?",
+            "location of the ticket machine",
+            "availability of ticket machines",
+            "ticket kiosk details"
+        ],
+        "responses": [
+            "I can help you find a ticket machine. Please provide the station name.",
+            "To locate a ticket machine, please tell me the name of the station.",
+            "Please share the station name so I can tell you about ticket machines there.",
+            "Let me know the station, and I’ll help you find the ticket machine."
+        ]
+    },
+    "seated_area": {
+        "patterns": [
+            "is there a seating area available?",
+            "where can I sit while waiting?",
+            "location of seated areas",
+            "waiting seats availability",
+            "are there places to sit?",
+            "seated area in the station"
+        ],
+        "responses": [
+            "I can help you find the seated area. Please provide the station name.",
+            "To locate a seated area, please tell me the name of the station.",
+            "Please provide the station name so I can check seating availability for you.",
+            "Let me know the station, and I’ll find the seated area information."
+        ]
+    },
+    "waiting_room": {
+        "patterns": [
+            "is there a waiting room?",
+            "waiting room availability",
+            "can I wait indoors at the station?",
+            "where is the waiting area?",
+            "do you have a station waiting room?",
+            "waiting room details"
+        ],
+        "responses": [
+            "I can help you find the waiting room. Please provide the station name.",
+            "To locate a waiting room, please tell me the name of the station.",
+            "Please share the station name so I can check the waiting room availability.",
+            "Let me know the station, and I’ll find the waiting room information."
+        ]
+    },
+    "toilets": {
+        "patterns": [
+            "where are the toilets?",
+            "are toilets available at the station?",
+            "station restroom location",
+            "toilet access",
+            "toilets in the station",
+            "bathroom availability"
+        ],
+        "responses": [
+            "I can help you find the toilets. Please provide the station name.",
+            "To locate the toilets, please tell me the name of the station.",
+            "Let me know the station, and I’ll find the toilet location."
+        ]
+    },
+    "baby_changing": {
+        "patterns": [
+            "where is the baby changing area?",
+            "do you have baby changing?",
+            "baby changing room location",
+            "can I change my baby at the station?",
+            "baby care",
+            "infant changing availability"
+        ],
+        "responses": [
+            "I can help you find the baby changing room. Please provide the station name.",
+            "To locate a baby changing room, please tell me the name of the station.",
+            "Let me know the station, and I’ll help locate the baby changing room."
+        ]
+    },
+    "wifi": {
+        "patterns": [
+            "is wifi available at the station?",
+            "can I access wifi?",
+            "station internet access",
+            "free wifi availability",
+            "wifi service in the station",
+            "wireless internet details"
+        ],
+        "responses": [
+            "I can help you find wifi access. Please provide the station name.",
+            "To locate wifi access, please tell me the name of the station.",
+            "Please share the station name so I can check wifi availability for you.",
+            "Let me know the station, and I’ll find wifi access details."
+        ]
+    },
+    "ramp_access": {
+        "patterns": [
+            "does the station have wheelchair access?",
+            "is there ramp access?",
+            "accessibility for disabled passengers",
+            "accessible station features",
+            "facilities for people with disabilities",
+            "is the station step-free?"
+        ],
+        "responses": [
+            "I can help you find ramp access. Please provide the station name.",
+            "To locate ramp access, please tell me the name of the station.",
+            "Please provide the station name so I can check accessibility features for you.",
+            "Let me know the station, and I’ll find the ramp access information."
+        ]
+    },
+    "ticket_gates": {
+        "patterns": [
+            "does the station have ticket gates?",
+            "are there barriers to enter the station?",
+            "where are the entry gates?",
+            "ticket checking gate details",
+            "do I need to go through a gate?",
+            "station ticket barrier availability"
+        ],
+        "responses": [
+            "I can help you find ticket gates. Please provide the station name.",
+            "To locate ticket gates, please tell me the name of the station.",
+            "Please share the station name so I can find ticket gate information for you.",
+            "Let me know the station, and I’ll provide details about the ticket gates."
+        ]
+    }
+}

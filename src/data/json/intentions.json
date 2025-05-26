@@ -4,36 +4,174 @@
             "yes",
             "sure",
             "ok",
+            "okay",
             "yes please",
             "absolutely",
             "definitely",
-            "certainly"
+            "certainly",
+            "sounds good",
+            "that works",
+            "that’s fine",
+            "yep",
+            "yeah",
+            "yup",
+            "alright",
+            "go ahead",
+            "please do",
+            "do it",
+            "of course",
+            "fine by me",
+            "sure thing",
+            "affirmative",
+            "let’s do it",
+            "you bet",
+            "gladly",
+            "I agree",
+            "I'm in",
+            "that's perfect"
         ],
         "responses": [
             "Great! How can I assist you further?",
             "Thank you! What else can I help you with?"
         ]
     },
+    "rejection": {
+        "patterns": [
+            "no",
+            "nope",
+            "not now",
+            "maybe later",
+            "nah",
+            "no thanks",
+            "not really",
+            "I don’t think so",
+            "don’t do that",
+            "let's not",
+            "cancel that",
+            "leave it",
+            "stop",
+            "never mind",
+            "forget it",
+            "I changed my mind",
+            "scratch that",
+            "that won’t be necessary",
+            "I'm good",
+            "I’m fine, thanks",
+            "not interested",
+            "don’t bother"
+        ],
+        "responses": [
+            "Alright, let me know if you change your mind.",
+            "No problem! I’m here if you need anything else.",
+            "Got it. Feel free to ask if you need help later.",
+            "Okay, just let me know when you're ready.",
+            "Sure thing! I'm standing by if you need me.",
+            "Understood. Let me know how I can assist next."
+        ]
+    },
+    "greeting": {
+        "patterns": [
+            "hi",
+            "hello",
+            "hey",
+            "good morning",
+            "good afternoon",
+            "good evening",
+            "hiya",
+            "hey there",
+            "hello there",
+            "morning",
+            "afternoon",
+            "evening",
+            "greetings",
+            "howdy",
+            "yo",
+            "sup",
+            "what’s up",
+            "hi there",
+            "hey assistant",
+            "hello assistant"
+        ],
+        "responses": [
+            "Hello! How can I help you today?",
+            "Hi there! What would you like to know?",
+            "Hey! Need help finding a train or station info?",
+            "Good to see you! How can I assist you?",
+            "Hi! Ready when you are. What can I do for you?",
+            "Hello! Looking for tickets, times, or something else?"
+        ]
+    },
+    "farewell": {
+        "patterns": [
+            "bye",
+            "goodbye",
+            "see you",
+            "see you later",
+            "talk to you later",
+            "catch you later",
+            "farewell",
+            "thanks, bye",
+            "thank you, bye",
+            "see ya",
+            "later",
+            "bye bye",
+            "I'm done",
+            "that’s all",
+            "that’s it for now",
+            "I’m good, thanks",
+            "cheers, bye"
+        ],
+        "responses": [
+            "Goodbye! Safe travels!",
+            "Take care! Let me know if you need anything else.",
+            "See you next time!",
+            "Thanks for chatting. Have a great day!",
+            "Catch you later!",
+            "Bye! Come back anytime you need travel help."
+        ]
+    },
     "train_delays": {
         "patterns": [
             "is the train delayed",
             "train delay",
-            "train running late",
-            "is my train on time",
+            "running late",
+            "is train on time",
             "train status",
-            "is the 0:00 train to X delayed?",
-            "are there any dleays on the line to X?",
-            "is the train running on time?",
-            "what is the status of my train?",
+            "are there any delays on the line to X?",
+            "running on time?",
+            "status of my train?",
             "is there service to X?",
             "delays",
             "disruptions",
-            "is the train on time",
-            "running late"
+            "any delays today?",
+            "are trains delayed?",
+            "has my train been delayed?",
+            "is the service running normally?",
+            "status update for train",
+            "train timetable changes",
+            "any disruption on my route?",
+            "is the 9:15 train delayed?",
+            "are there any issues on the track?",
+            "is the train schedule affected?",
+            "check train delay",
+            "will my train be late?",
+            "train late notification",
+            "latest on train delays",
+            "updates on train delays",
+            "is the train canceled or delayed?",
+            "any problems with trains today?",
+            "are trains running on time?",
+            "train delay information"
         ],
         "responses": [
             "I can check the status of your train. Please provide the train number and station.",
-            "To check for delays, please let me know your train number and departure station."
+            "To check for delays, please let me know your train number and departure station.",
+            "Let me find out if your train is running on time. Could you give me the train number and departure point?",
+            "Please provide the train number and station so I can check for any delays or disruptions.",
+            "I’ll check if there are any delays on your route. Could you share your train number and station?",
+            "To get the latest delay info, please tell me the train number and departure station.",
+            "I’m here to help with train delay updates. What’s your train number and station?",
+            "Provide the train details, and I’ll check if there are any disruptions or delays."
         ]
     },
     "route_details": {
@@ -42,9 +180,21 @@
             "train route",
             "what is the route to X",
             "what is the route from X to Y",
-            "what is the route from Y to X",
-            "what is the journey from X to Y",
-            "what is the journey from Y to X"
+            "how do I get to X",
+            "how do I travel from X to Y",
+            "best route to X",
+            "best route from X to Y",
+            "train connections from X to Y",
+            "route details from X to Y",
+            "travel route from X to Y",
+            "directions to X by train",
+            "which route goes to X",
+            "which trains go to X",
+            "journey plan from X to Y",
+            "train itinerary from X to Y",
+            "what stops are on the route to X",
+            "what stations does the train stop at to X",
+            "what is the train route to X"
         ],
         "responses": [
             "I can help you with train routes. Please provide your departure and destination stations.",
@@ -58,11 +208,31 @@
             "what time does the train to X leave",
             "departure schedule",
             "when is the next train to X",
-            "next train to X"
+            "next train to X",
+            "train departure times",
+            "train leaves at what time",
+            "what time does the next train leave",
+            "train leaving times",
+            "next departure from X",
+            "train schedule for departures",
+            "departure time for train",
+            "when is the first train to X",
+            "when is the last train to X",
+            "next train leaving station",
+            "departure board",
+            "train timetable for departures",
+            "departure times today",
+            "schedule for train departures",
+            "train leaving soon",
+            "when will the train leave station"
         ],
         "responses": [
-            "I can help you find departure times. Please provide your departure station.",
-            "To check departure times, please let me know your departure station."
+            "I can help you find departure times. Please provide your departure station and destination if possible.",
+            "To check departure times, please let me know your departure station and, if you have one, the destination.",
+            "Please tell me your departure station and destination so I can provide the next train times.",
+            "Let me know where you are leaving from and where you're headed, and I'll find the departure times for you.",
+            "Give me your departure station and destination to find the train schedule.",
+            "I’m ready to help with departure schedules. Please provide the departure station."
         ]
     },
     "arrival_times": {
@@ -71,11 +241,31 @@
             "when does the train arrive",
             "what time does the train to X arrive",
             "arrival schedule",
-            "when does the train from X arrive"
+            "when does the train from X arrive",
+            "train arrival times",
+            "train arriving at what time",
+            "what time will the train arrive",
+            "arrival time for train",
+            "next arrival at X",
+            "train schedule for arrivals",
+            "arrival board",
+            "train timetable for arrivals",
+            "when is the first train arriving",
+            "when is the last train arriving",
+            "train arriving soon",
+            "arrival times today",
+            "schedule for train arrivals",
+            "expected arrival time",
+            "estimated train arrival",
+            "arrival times at station"
         ],
         "responses": [
-            "I can help you find arrival times. Please provide your destination station.",
-            "To check arrival times, please let me know your destination station."
+            "I can help you find arrival times. Please provide your destination station and departure point if possible.",
+            "To check arrival times, please let me know your destination station and, if available, the departure station.",
+            "Please tell me your destination and departure station so I can provide the arrival schedule.",
+            "Let me know your destination station and departure point, and I’ll find the arrival times for you.",
+            "Give me the arrival station and, if you know it, the departure station to find your train’s expected arrival.",
+            "I’m ready to help with train arrivals. Please provide the destination station."
         ]
     },
     "booking_tickets": {
@@ -93,177 +283,90 @@
             "i need a train ticket",
             "i want to travel from X to Y",
             "i want to go to X",
-            "i want to go to Y",
             "how do i go from X to Y",
-            "how do i get to X",
             "reserve a ticket",
-            "book a ticket",   
+            "book a ticket",
             "purchase a ticket",
             "buy a ticket",
-            "find me a ticket",
-            "before X",
-            "after X",
-            "from X",
-            "to X",
-            "returning from X"
+            "find me a ticket"
         ],
         "responses": [
             "I can help you with ticket booking. Please provide your departure and destination stations.",
             "To book tickets, please tell me where you're traveling from and to."
         ]
     },
-    "platform_details": {
+    "station_faq": {
         "patterns": [
-            "platform",
-            "which platform",
-            "where is platform X",
-            "what platform is the train to X",
-            "which platform for X",
-            "platform number"
+            "tell me about this station",
+            "station info",
+            "station information",
+            "give me information about the station",
+            "give me station info",
+            "what facilities are at the station",
+            "does this station have any facilities",
+            "information about the station",
+            "give me details about the station",
+            "what’s available at the station",
+            "what services are there at the station",
+            "what does the station offer",
+            "what can I find at the station",
+            "is there anything at this station",
+            "what amenities are at this station",
+            "what does the station include",
+            "what’s included at the station",
+            "what features does this station have",
+            "can you tell me about the station",
+            "what facilities does this station offer",
+            "overview of the station",
+            "does the station have any amenities",
+            "list station features",
+            "what can I do at this station",
+            "what can I access at the station",
+            "what does this place have",
+            "what options are available at this station",
+            "what kind of services does the station provide",
+            "station features",
+            "station services",
+            "station overview",
+            "does it have waiting areas or toilets",
+            "what’s at this stop",
+            "what amenities are provided here",
+            "describe this station",
+            "general info about the station",
+            "what should I know about this station",
+            "what can I use at this station",
+            "is there anything useful at this station",
+            "show me facilities at the station",
+            "how is the station equipped",
+            "station capabilities",
+            "where is this station located",
+            "what is the address of this station",
+            "where is the station",
+            "what is the location of this station",
+            "what is the train operator for this station",
+            "who operates this station",
+            "what are the ticket office hours for this station",
+            "when is the ticket office open at this station",
+            "is there a ticket machine at this station",
+            "where is the ticket machine at this station",
+            "are there any seated areas at this station",
+            "does this station have seating",
+            "is there a waiting area at this station",
+            "where can I find a seated area at this station",
+            "does this station have toilets",
+            "where are the toilets at this station",
+            "does this station offer baby changing facilities",
+            "is there a baby changing area at this station",
+            "does this station have wi-fi",
+            "is there wifi at this station",
+            "is there ramp access at this station",
+            "does this station have a ramp",
+            "are there ticket gates at this station",
+            "is there a ticket gate at this station"
         ],
         "responses": [
-            "I can help you find the platform. Please provide the train number or destination.",
-            "To find the platform, please let me know your train number or destination."
-        ]
-    },
-    "address_details": {
-        "patterns": [
-            "address",
-            "location",
-            "where is X",
-            "where is Y",
-            "what is the address of X"
-        ],
-        "responses": [
-            "I can help you find the address. Please provide the name of the place you're looking for.",
-            "To find an address, please tell me the name of the location."
-        ]
-    },
-    "train_operator": {
-        "patterns": [
-            "operator",
-            "train operator",
-            "who operates the train to X",
-            "who is the operator for X",
-            "what is the train operator for X"
-        ],
-        "responses": [
-            "I can help you find the train operator. Please provide the train number or route.",
-            "To find the train operator, please let me know the train number or route."
-        ]
-    },
-    "ticket_off_hours": {
-        "patterns": [
-            "ticket office hours",
-            "when is the ticket office open",
-            "ticket office",
-            "what time does the ticket office open",
-            "what time does the ticket office close",
-            "ticket office opening hours"
-        ],
-        "responses": [
-            "I can help you with ticket office hours. Please provide the station name.",
-            "To find ticket office hours, please tell me the name of the station."
-        ]
-    },
-    "ticket_machine": {
-        "patterns": [
-            "ticket machine",
-            "where is the ticket machine",
-            "is there a ticket machine at X",
-            "where can I find a ticket machine",
-            "ticket vending machine"
-        ],
-        "responses": [
-            "I can help you find a ticket machine. Please provide the station name.",
-            "To locate a ticket machine, please tell me the name of the station."
-        ]
-    },
-    "seated_area": {
-        "patterns": [
-            "seated area",
-            "where is the seated area",
-            "is there a seated area at X",
-            "where can I find a seated area",
-            "seating area"
-        ],
-        "responses": [
-            "I can help you find the seated area. Please provide the station name.",
-            "To locate a seated area, please tell me the name of the station."
-        ]
-    },
-    "waiting_room": {
-        "patterns": [
-            "waiting room",
-            "where is the waiting room",
-            "is there a waiting room at X",
-            "where can I find a waiting room",
-            "waiting area"
-        ],
-        "responses": [
-            "I can help you find the waiting room. Please provide the station name.",
-            "To locate a waiting room, please tell me the name of the station."
-        ]
-    },
-    "toilets": {
-        "patterns": [
-            "toilets",
-            "where are the toilets",
-            "is there a toilet at X",
-            "where can I find a toilet",
-            "restroom"
-        ],
-        "responses": [
-            "I can help you find the toilets. Please provide the station name.",
-            "To locate the toilets, please tell me the name of the station."
-        ]
-    },
-    "baby_changing": {
-        "patterns": [
-            "baby changing",
-            "where is the baby changing room",
-            "is there a baby changing room at X",
-            "where can I find a baby changing room"
-        ],
-        "responses": [
-            "I can help you find the baby changing room. Please provide the station name.",
-            "To locate a baby changing room, please tell me the name of the station."
-        ]
-    },
-    "wifi": {
-        "patterns": [
-            "wifi",
-            "is there wifi at X",
-            "where can I find wifi",
-            "wifi access"
-        ],
-        "responses": [
-            "I can help you find wifi access. Please provide the station name.",
-            "To locate wifi access, please tell me the name of the station."
-        ]
-    },
-    "ramp_access": {
-        "patterns": [
-            "ramp access",
-            "is there ramp access at X",
-            "where can I find ramp access",
-            "accessible facilities"
-        ],
-        "responses": [
-            "I can help you find ramp access. Please provide the station name.",
-            "To locate ramp access, please tell me the name of the station."
-        ]
-    },
-    "ticket_gates": {
-        "patterns": [
-            "ticket gates",
-            "are there ticket gates at X",
-            "where can I find ticket gates",
-            "ticket barriers"
-        ],
-        "responses": [
-            "I can help you find ticket gates. Please provide the station name.",
-            "To locate ticket gates, please tell me the name of the station."
+            "I can provide you with station information. Please tell me the location or name of the station.",
+            "To find out about a station, please let me know its location or name."
         ]
     }
 }

@@ -85,7 +85,5 @@ def test_find_closest_stations(query, expected_stations):
     results = find_closest_stations(query)
     assert any(expected_station in results for expected_station in expected_stations)
 
-
-
 if __name__ == "__main__":
     pytest.main()

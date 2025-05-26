@@ -1,12 +1,26 @@
 import json
 
-RESPONSES_PATH = "./src/data/json/intentions.json"
+INTENTIONS_PATH = "./src/data/json/intentions.json"
 EXTRACTION_PATH = "./src/data/json/extraction_patterns.json"
 CONSTRAINTS_path = "./src/data/json/constraints.json"
+FAQ_PATH = "./src/data/json/station_intentions.json"
 
-responses = {}
+intentions = {}
 extraction_patterns = {}
 constraints = {}
+station_faqs = {}
+
+def load_station_faqs() -> dict[str, str]:
+    """
+    Load station FAQs from a JSON file into a dictionary.
+    :return: A dictionary where the keys are station names and the values are their corresponding FAQs.
+    """
+    global station_faqs
+    if not station_faqs:
+        with open(FAQ_PATH, mode="r") as file:
+            station_faqs = json.load(file)
+    return station_faqs
+    
 
 def load_constraints() -> dict[str, list]:
     """
@@ -19,18 +33,18 @@ def load_constraints() -> dict[str, list]:
             constraints = json.load(file)
     return constraints
 
-def load_responses() -> dict[str, str]:
+def load_intentions() -> dict[str, str]:
     """
-    Load responses from a CSV file into a dictionary.
-    :return: A dictionary where the keys are intents and the values are their corresponding responses.
+    Load intentions from a CSV file into a dictionary.
+    :return: A dictionary where the keys are intents and the values are their corresponding intentions.
     """
-    global responses
-    if not responses:
-        with open(RESPONSES_PATH, mode="r") as file:
+    global intentions
+    if not intentions:
+        with open(INTENTIONS_PATH, mode="r") as file:
             data = json.load(file)
             for intent, details in data.items():
-                responses[intent] = details
-    return responses
+                intentions[intent] = details
+    return intentions
 
 def load_patterns() -> dict[str, str]:
     """
@@ -151,17 +165,17 @@ def get_pattern_array(arr: list) -> dict:
     """
     return {"LOWER": {"in": arr}}
 
-def get_training_responses_and_labels() -> list:
+def get_intentions_training_data() -> list:
     training_sentences = []
     intent_labels = []
     
-    for key in responses:
-        for pattern in responses[key]["patterns"]:
+    for key in intentions:
+        for pattern in intentions[key]["patterns"]:
             training_sentences.append(pattern)
             intent_labels.append(key)
     return training_sentences, intent_labels
 
-def get_constraint_training_responses_and_labels() -> list:
+def get_constraint_training_data() -> list:
     training_sentences = []
     intent_labels = []
     
@@ -171,6 +185,17 @@ def get_constraint_training_responses_and_labels() -> list:
             intent_labels.append(key)
     return training_sentences, intent_labels
 
-responses = load_responses()
+def get_faq_training_data() -> list:
+    training_sentences = []
+    intent_labels = []
+    
+    for key in station_faqs:
+        for pattern in station_faqs[key]["patterns"]:
+            training_sentences.append(pattern)
+            intent_labels.append(key)
+    return training_sentences, intent_labels
+
+intentions = load_intentions()
 extraction_patterns = load_patterns()
 constraints = load_constraints()
+station_faqs = load_station_faqs()
