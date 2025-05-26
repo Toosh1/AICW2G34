@@ -133,8 +133,8 @@ def parse_datestring(date_string: str, current_date) -> str:
 
 def parse_journey_dict(journey_dict: dict, current_date) -> tuple:
     for key in journey_dict:
-        datestring = " ".join(journey_dict.get(key, []))
-        current_date = parse_datestring(datestring, current_date)
+        for value in journey_dict[key]:
+            current_date = parse_datestring(value, current_date)
     return current_date
 
 def parse_journey_times(outbound: dict, inbound: dict) -> tuple:
