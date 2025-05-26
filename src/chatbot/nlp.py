@@ -1,14 +1,5 @@
 """
 # Pisces: A Train Travel Assistant
-
-## Checklist
-- Extract Date and Time [✔]
-    - Get to_train date and time and return_train date and time […]
-    - TODO Assume Date = TODAY and Time = NOW for the outbound journey if not found
-
-## NOTE Limitation of `get_journey_times`
-    - Assumes first instance of date and time is the outbound journey and the second instance is the return journey
-        - This won't work if the user only enters the date and time for the return journey
 ## NOTE Current Assumptions
     - No railcards
     - Only 1 adult
@@ -29,34 +20,16 @@ from chatbot.database import *
 from chatbot.knowledge_base import *
 from utils.input_handler import *
 
-# Load spaCy's English model
-nlp = spacy.load("en_core_web_sm")
+#region Setup the NLP pipeline ------
 
-# Create pipeline
-intent_classifier = Pipeline([
-    ("vectorizer", TfidfVectorizer()),
-    ("classifier", LogisticRegression())
-])
-
-constraint_classifier = Pipeline([
-    ("vectorizer", TfidfVectorizer()),
-    ("classifier", LogisticRegression())
-])
-
-faq_classifier = Pipeline([
-    ("vectorizer", TfidfVectorizer()),
-    ("classifier", LogisticRegression())
-])
-
-preposition_matcher = None
-return_matcher = None
-
-TIME_ENTITIES = ["TIME", "DATE", "ORDINAL", "SERIES", "MONTH"]
-departure_terms = get_prepositions("departure")
-arrival_terms = get_prepositions("arrival")
-
-
-#------Setup the NLP pipeline------
+def create_pipeline() -> Pipeline:
+    tfidf = TfidfVectorizer()
+    logicistic_regression = LogisticRegression()
+    
+    return Pipeline([
+        ("vectorizer", tfidf),
+        ("classifier", logicistic_regression)
+    ])
 
 def setup() -> None:
     add_stations_to_vocab()
@@ -144,7 +117,9 @@ def train_faq_classifier() -> None:
     training_sentences, faq_labels = get_faq_training_data()
     faq_classifier.fit(training_sentences, faq_labels)
 
-#------Text Preprocessing Functions------
+#endregion
+
+#region Text Preprocessing Functions ------
 
 def predict_classifier(text: str, classifier: Pipeline) -> tuple:
     """
@@ -153,7 +128,7 @@ def predict_classifier(text: str, classifier: Pipeline) -> tuple:
     :param classifier: The classifier to use for prediction.
     :return: A tuple containing the predicted label and its probability.
     """
-    prediction = classifier.predict([text])
+    prediction = classifier.predict([text.lower()])
     probability = classifier.predict_proba([text])
     return str(prediction[0]), probability
 
@@ -167,16 +142,13 @@ def get_time_constraints(text: str, split_index: tuple) -> str:
     text = preprocess_text(text, nlp, True, True)
     variation, index = split_index
     split_text = [text[:index], text[index + len(variation):]] if variation else [text]
-    constraints = ['DEPARTING', 'DEPARTING']
+    constraints = ['departing', 'departing']
 
     # Loop through the split text and extract time constraints
     for i in range(len(split_text)):
         segment = split_text[i]
-        constraint, _ = predict_classifier(segment, constraint_classifier)
+        constraint, confidence = predict_classifier(segment, constraint_classifier)
         constraints[i] = constraint if constraint else constraints[i]
-    
-    # Fill in missing constraints with 'DEPARTING'
-    constraints.extend(['DEPARTING'] * (2 - len(constraints)))
     
     return constraints
 
@@ -338,6 +310,22 @@ def get_return_ticket(text: str) -> str:
     variations = [doc[start:end].text.lower() for _, start, end in matches]
     return extract_best_split_index(text, variations)
 
+#endregion
+
+# Load spaCy's English model
+nlp = spacy.load("en_core_web_sm")
+
+intent_classifier = create_pipeline()
+constraint_classifier = create_pipeline()
+faq_classifier = create_pipeline()
+
+preposition_matcher = None
+return_matcher = None
+
+TIME_ENTITIES = ["TIME", "DATE", "ORDINAL", "SERIES", "MONTH"]
+departure_terms = get_prepositions("departure")
+arrival_terms = get_prepositions("arrival")
+
 setup()
 
 if __name__ == "__main__":
@@ -361,11 +349,13 @@ if __name__ == "__main__":
         print(f"Inbound: {inbound}")
         print(f"Time Constraints: {time_constraints}")
         print(f"Inbound Date: {inbound_date}")
+        print(f"Outbound Date: {outbound_date}")
         print(f"Intent: {intent}")
         print(f"Confidence: {confidence.max()}")
         if intent == "station_faq":
             print(f"FAQ Intent: {faq_intent}")
             print(f"FAQ Confidence: {faq_confidence.max()}")
-        print(f"Outbound Date: {outbound_date}")
         print("--" * 30)
+
+
 

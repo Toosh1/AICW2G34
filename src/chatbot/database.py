@@ -171,8 +171,8 @@ def get_intentions_training_data() -> list:
     
     for key in intentions:
         for pattern in intentions[key]["patterns"]:
-            training_sentences.append(pattern)
-            intent_labels.append(key)
+            training_sentences.append(pattern.lower())
+            intent_labels.append(key.lower())
     return training_sentences, intent_labels
 
 def get_constraint_training_data() -> list:
@@ -181,8 +181,8 @@ def get_constraint_training_data() -> list:
     
     for key in constraints:
         for pattern in constraints[key]:
-            training_sentences.append(pattern)
-            intent_labels.append(key)
+            training_sentences.append(pattern.lower())
+            intent_labels.append(key.lower())
     return training_sentences, intent_labels
 
 def get_faq_training_data() -> list:
@@ -191,8 +191,8 @@ def get_faq_training_data() -> list:
     
     for key in station_faqs:
         for pattern in station_faqs[key]["patterns"]:
-            training_sentences.append(pattern)
-            intent_labels.append(key)
+            training_sentences.append(pattern.lower())
+            intent_labels.append(key.lower())
     return training_sentences, intent_labels
 
 intentions = load_intentions()
