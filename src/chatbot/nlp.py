@@ -5,7 +5,6 @@
 - Extract Date and Time [✔]
     - Get to_train date and time and return_train date and time […]
     - TODO Assume Date = TODAY and Time = NOW for the outbound journey if not found
-    - TODO Account for multiple return phrases of the same type (e.g. "I want a return trip and I to go to London and return to Manchester")
 
 ## NOTE Limitation of `get_journey_times`
     - Assumes first instance of date and time is the outbound journey and the second instance is the return journey

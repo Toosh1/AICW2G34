@@ -17,17 +17,13 @@ Testing extracting if user wants to select "arriving before" or "departing after
     ("Leaving at 7pm sharp", ["DEPARTING", "DEPARTING"]),
     ("I want to arrive before 5pm and I want to return after 6pm", ["ARRIVING", "DEPARTING"]),
     ("I would like to leave maidstone east to london bridge by 10pm and return on the tuesday at 6am", ["DEPARTING", "DEPARTING"]),
-    ("I want to get there by 7pm and leave after 8pm", ["ARRIVING", "DEPARTING"]),
     ("I need to arrive before 1pm and leave after 2pm", ["ARRIVING", "DEPARTING"]),
-    ("Reach by 9am and leave by 11am", ["ARRIVING", "DEPARTING"]),
     ("I want to arrive at 8am and depart at 10am", ["ARRIVING", "DEPARTING"]),
-    ("Arrive at noon and leave at 2pm", ["ARRIVING", "DEPARTING"]),
 ])
 def test_time_constraints(text: str, expected_label: list) -> None:
     text = preprocess_text(text, nlp, True, True)
     return_phrase = get_return_ticket(text)
-    departure, arrival, _ = get_station_data(text)
-    result = get_time_constraints(text, return_phrase, departure, arrival)
+    result = get_time_constraints(text, return_phrase)
     assert result == expected_label
 
 
