@@ -35,7 +35,7 @@ def get_passengers(adults: int, children: int) -> str:
     """
     return f"&adults={adults}&children={children}"
 
-def get_single_ticket_url(origin: str, destination: str, leaving_date: str, leaving_hour: str, leaving_min: str, adults: int = 1) -> str:
+def get_single_ticket_url(origin: str, destination: str, leaving_type: str, leaving_date: str, leaving_hour: str, leaving_min: str, adults: int = 1) -> str:
     """
     Constructs a URL for a single train ticket.
 
@@ -47,7 +47,7 @@ def get_single_ticket_url(origin: str, destination: str, leaving_date: str, leav
     :param adults: The number of adult passengers (default is 1).
     :returns: The constructed URL for the single train ticket.
     """
-    return f"{NATIONAL_RAIL_URL}?type=single{get_locations(origin, destination)}{get_departure_time('leaving', 'departing', leaving_date, leaving_hour, leaving_min)}&adults={adults}"
+    return f"{NATIONAL_RAIL_URL}?type=single{get_locations(origin, destination)}{get_departure_time('leaving', leaving_type, leaving_date, leaving_hour, leaving_min)}&adults={adults}"
 
 def get_return_ticket_url(origin: str, destination: str, leaving_type: str, leaving_date: str, leaving_hour: str, leaving_min: str, returning_type: str, return_date: str, return_hour: str, return_min: str, adults: int = 1) -> str:
     """
@@ -69,6 +69,5 @@ def get_return_ticket_url(origin: str, destination: str, leaving_type: str, leav
     return f"{NATIONAL_RAIL_URL}?type=return{get_locations(origin, destination)}{get_departure_time('leaving', leaving_type, leaving_date, leaving_hour, leaving_min)}{get_departure_time('return', returning_type, return_date, return_hour, return_min)}&adults={adults}"
 
 if __name__ == "__main__":
-    # Get a single ticket URL with 2 adults
-    url = get_single_ticket_url("MDE", "NRW", "220525", "10", "30")
+    url = get_single_ticket_url("MDE", "NRW", "departing", "300525", "10", "30")
     print(url)
