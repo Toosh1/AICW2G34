@@ -190,6 +190,14 @@ def complete_request():
         print(messages[0])
         llm_generate_question_async()
     
+    elif request[0] == "train_delays":
+        pass
+        ##get times from thing and get from prediction model
+
+
+    elif request[0] == "departure_time":
+        pass
+        ##add the live departure time thingy
 
     messages.clear()
     current_stage = "waiting"
