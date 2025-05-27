@@ -3,6 +3,7 @@ from datetime import datetime
 from llama_cpp import Llama
 from dotenv import load_dotenv
 from queue import Queue
+import prediction_model
 
 import os, threading, nlp, journey_planner, knowledge_base, sys
 
@@ -76,6 +77,14 @@ def llm_generate_question_async():
     threading.Thread(target=generate).start()
 
 # --- Prompt Builders ---
+def add_ticket_followup():
+    prompt = (
+        "Tell the user its hyperlink is ready for the ticket:\n" +
+        "\nDo not discuss anything else."
+    )
+    messages.append({"role": "assistant", "content": prompt})
+    llm_generate_question_async()
+
 
 def hello_prompt_builder():
     return {
@@ -111,6 +120,15 @@ def reply_prompt_builder(reply):
             "You are a railway assistant helping a user. You have checked and below is the answer to the question the user asked.\n" +
             "Only provide the user with the following information." +
             "\n" + reply
+        )
+    }
+def reply_delay_builder(reply):
+    return {
+        "role": "system",
+        "content": (
+            "You are a railway assistant helping a user. You have checked if there will be a delay withe the train.\n" +
+            "The percentage change there will be a delay is " +
+            "\n" + reply + "%. Be professional and discuss nothing else"
         )
     }
 
@@ -189,6 +207,7 @@ def complete_request():
         print("Arriving code: ", arriving_code)
         print("Outbound journey: ", outbound)
         print("Booking URL: ", url)
+        add_ticket_followup()
         
     elif request[0] in ["platform_details","address_details","train_operator","ticket_off_hours","ticket_machine","seated_area","waiting_area","toilets","baby_changing","wifi","ramp_access","ticket_gates"]:
         columns = nlp.intent_to_function.get(request[0])
@@ -205,8 +224,13 @@ def complete_request():
         llm_generate_question_async()
     
     elif request[0] == "train_delays":
-        pass
-        ##get times from thing and get from prediction model
+        outbound_date, inbound_date = parse_journey_times(info["departure_time"], None)
+        _,_,_,hour,minute = convert_datetime_to_tuple(str(outbound_date))
+        delay = prediction_model.predict_delay_for_time(hour+":"+minute)
+        print(delay)
+        messages[0] = reply_delay_builder(f"{delay:.2f}")
+        print(messages[0])
+        llm_generate_question_async()
 
     elif request[0] == "departure_time":
         pass
