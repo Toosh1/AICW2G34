@@ -12,16 +12,6 @@ llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)
 
 # Global variables
 messages = [""]
-info = {
-    "departure_station": None,
-    "arrival_station": None,
-    "departure_time": None,
-    "departure_date": None,
-}
-current_stage = "ask_info"
-chat_canvas_frame = None
-chat_frame = None
-
 # --- Chat Functionality ---
 def append_message(role, message):
     messages.append({"role": role, "content": message})
@@ -67,34 +57,18 @@ llm_queue = Queue()
 llm_processing = False
 
 def llm_generate_question_async():
-    global llm_processing
+    typing_label = tk.Label(chat_canvas_frame, text="Pisces is typing...", fg="gray", font=("Arial", 10, "italic"), bg="#F0F0F0")
+    typing_label.pack(anchor='w', padx=10, pady=2)
+    chat_frame.update_idletasks()
 
-    def process_queue():
-        global llm_processing
-        if not llm_queue.empty():
-            typing_label = tk.Label(chat_canvas_frame, text="Pisces is typing...", fg="gray", font=("Arial", 10, "italic"), bg="#F0F0F0")
-            typing_label.pack(anchor='w', padx=10, pady=2)
-            chat_frame.update_idletasks()
+    def generate():
+        chat_question = llm.create_chat_completion(messages)
+        llm_response = chat_question["choices"][0]["message"]["content"]
+        append_message("assistant", llm_response)
+        typing_label.destroy()
+        add_message(llm_response, is_user=False)
 
-            def generate():
-                global llm_processing
-                chat_question = llm.create_chat_completion(messages)
-                llm_response = chat_question["choices"][0]["message"]["content"]
-                append_message("assistant", llm_response)
-                typing_label.destroy()
-                add_message(llm_response, is_user=False)
-                llm_queue.get()
-                llm_processing = False
-                if not llm_queue.empty():
-                    llm_processing = True
-                    process_queue()
-
-            threading.Thread(target=generate).start()
-
-    llm_queue.put(1)
-    if not llm_processing:
-        llm_processing = True
-        process_queue()
+    threading.Thread(target=generate).start()
 
 # --- Prompt Builders ---
 def hello_prompt_builder():
@@ -142,13 +116,21 @@ def reply_prompt_builder(reply):
             "\n" + reply
         )
     }
-
+def route_prompt_builder(reply):
+    return {
+        "role": "system",
+        "content": (
+            "You are a railway assistant helping a user. You have checked and below is the answer to the question the user asked.\n" +
+            "Only provide the user with the following information. Explain the entire route following, provide the entire route." +
+            "\n" + reply
+        )
+    }
 
 # --- NLP Integration ---
 
 def collect_info(user_input):
     global current_requirements, info
-    requirements = current_requirements[:]
+    requirements = current_requirements
     if "station" in requirements:
             station = nlp.extract_single_station(user_input)
             if station:
@@ -167,9 +149,9 @@ def collect_info(user_input):
             info["arrival_station"] = arrival
             requirements.remove("arrival_station")
             print("Arrival found: ", arrival)
-        if similar_stations:
-            messages[0] = incorrect_station_prompt_builder(similar_stations[0])
-            llm_generate_question_async()
+        # if similar_stations:
+        #     messages[0] = incorrect_station_prompt_builder(similar_stations[0])
+        #     llm_generate_question_async()
 
     elif "departure_station" in requirements:
             station = nlp.extract_single_station(user_input)
@@ -184,19 +166,17 @@ def collect_info(user_input):
                 requirements.remove("arrival_station")
         #add similar stations logic
         
-    if "departure_time" in current_requirements and "departure_date" in current_requirements:
+    if "departure_time" in current_requirements:
         journey = nlp.extract_date_and_time(user_input)
-        time = journey.get("TIME")
-        date = journey.get("DATE")
-        print(journey)
-        if date != []:
+        if journey.get("DATE") != []:
             requirements.remove("departure_time")
-            requirements.remove("departure_date")
+            info["departure_time"] = journey
 
     current_requirements = requirements
 
 def complete_request():
     global info, request,current_stage
+    print("message completed")
     if request[0] == "booking_tickets":
         print(f"wow booked ticket from {info["departure_station"]} to {info['arrival_station']}")
         ##you need to print hyperlink here all data should be in info
@@ -211,9 +191,11 @@ def complete_request():
     elif request[0] == "route_details":
         route = journey_planner.get_optimal_path(info["departure_station"],info["arrival_station"])
         string_path = journey_planner.format_route(route)
-        messages[0] = reply_prompt_builder(string_path)
+        messages[0] = route_prompt_builder(string_path)
+        print(messages[0])
         llm_generate_question_async()
     
+
     messages.clear()
     current_stage = "waiting"
     info = {}
@@ -221,7 +203,7 @@ def complete_request():
 
 question_requirements = {
 
-    "train_delays" : ["departure_station"],
+    "train_delays" : ["departure_time"],
     "departure_time" : ["departure_station"],
 
 
@@ -239,7 +221,7 @@ question_requirements = {
     "ramp_access" : ["station"],
     "ticket_gates" : ["station"],
     "route_details" : ["departure_station", "arrival_station"],
-    "booking_tickets" : ["departure_station", "arrival_station", "departure_time", "departure_date"],
+    "booking_tickets" : ["departure_station", "arrival_station", "departure_time"],
 
 }
 
@@ -275,6 +257,7 @@ def send_message():
         collect_info(user_input)
         if current_requirements != []:
             messages[0] = generic_prompt_builder(current_requirements)
+            print(messages[0])
             llm_generate_question_async()
         else:
             complete_request()
@@ -283,6 +266,7 @@ def send_message():
         collect_info(user_input)
         if current_requirements != []:
             messages[0] = generic_prompt_builder(current_requirements)
+            print(messages[0])
             llm_generate_question_async()
         else:
             complete_request()
