@@ -27,8 +27,6 @@ cancellation_reasons = {}
 vias = {}
 tocs = {}
 
-
-
 conn = psycopg2.connect(
     host="localhost",
     port="5432",
@@ -654,7 +652,6 @@ def get_station_details_by_columns(name: str, columns: list[str]) -> str:
             info.append(f"{col.replace('_', ' ').capitalize()}: {val}")
         return "\n".join(info)
 
-
 intent_to_function = {
     "train_delays": "",  # function to get train delays
     "route_details": "",  # function to get route details
@@ -671,7 +668,6 @@ intent_to_function = {
     "ramp_access": ["ramp_for_train_access_available"],
     "ticket_gates": ["ticket_gates_available"],
 }
-
 
 # Main ------------------------------------------------------
 

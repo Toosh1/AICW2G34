@@ -158,3 +158,13 @@ def process_station_name(station_name: str, nlp) -> list:
         for token in station_name.split()
         if len(token) > 2 and token.lower() not in merged_stopwords
     ]
+
+def convert_datetime_to_tuple(date_time: str) -> tuple:
+    date_time_obj = datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
+    return (
+        str(date_time_obj.year)[-2:],
+        str(date_time_obj.month).zfill(2),
+        str(date_time_obj.day).zfill(2),
+        str(date_time_obj.hour).zfill(2),
+        str(date_time_obj.minute).zfill(2)
+    )

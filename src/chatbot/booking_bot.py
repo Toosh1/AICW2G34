@@ -1,18 +1,25 @@
 import tkinter as tk
 from datetime import datetime
-import os
-import threading
 from llama_cpp import Llama
 from dotenv import load_dotenv
-import nlp
-import journey_planner
+from queue import Queue
+
+import os, threading, nlp, journey_planner, knowledge_base, sys
+
+# Merge the parent directory to the system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from utils.input_handler import *
+from utils.train_ticket_handler import *
 
 load_dotenv()
 llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)
 
 # Global variables
 messages = [""]
+
 # --- Chat Functionality ---
+
 def append_message(role, message):
     messages.append({"role": role, "content": message})
 
@@ -51,8 +58,6 @@ def add_message(text, is_user):
     chat_frame.update_idletasks()
     chat_frame.yview_moveto(1.0)
 
-from queue import Queue
-
 llm_queue = Queue()
 llm_processing = False
 
@@ -71,12 +76,12 @@ def llm_generate_question_async():
     threading.Thread(target=generate).start()
 
 # --- Prompt Builders ---
+
 def hello_prompt_builder():
     return {
         "role": "system",
         "content": "You are a railway assistant helping a user book a ticket. Just greet the user."
     }
-
 
 def add_focused_followup(keys):
     if not keys:
@@ -89,8 +94,6 @@ def add_focused_followup(keys):
     messages.append({"role": "assistant", "content": prompt})
     llm_generate_question_async()
 
-
-
 def incorrect_station_prompt_builder(close_stations):
     suggestion = ", ".join(close_stations[1])
     return {
@@ -101,7 +104,6 @@ def incorrect_station_prompt_builder(close_stations):
         )
     }
 
-
 def reply_prompt_builder(reply):
     return {
         "role": "system",
@@ -111,6 +113,7 @@ def reply_prompt_builder(reply):
             "\n" + reply
         )
     }
+
 def route_prompt_builder(reply):
     return {
         "role": "system",
@@ -131,8 +134,6 @@ def collect_info(user_input):
             if station:
                 info["station"] = station
                 requirements.remove("station")
-
-    
 
     if "departure_station" in current_requirements and "arrival_station" in current_requirements:
         departure, arrival, similar_stations = nlp.get_station_data(user_input)
@@ -163,19 +164,32 @@ def collect_info(user_input):
         
     if "departure_time" in current_requirements:
         journey = nlp.extract_date_and_time(user_input)
-        if journey.get("DATE") != []:
+        if journey.get("DATE") != [] or journey.get("TIME") != []:
             requirements.remove("departure_time")
             info["departure_time"] = journey
 
     current_requirements = requirements
 
 def complete_request():
-    global info, request,current_stage
-    print("message completed")
+    global info, request, current_stage
+    print("Message Completed")
+    print(f"Request: {request[0]}")
+    
     if request[0] == "booking_tickets":
-        print(f"wow booked ticket from {info["departure_station"]} to {info['arrival_station']}")
-        ##you need to print hyperlink here all data should be in info
-
+        departing_code = knowledge_base.get_station_code_from_name(info["departure_station"])
+        arriving_code = knowledge_base.get_station_code_from_name(info["arrival_station"])
+        outbound, _ = parse_journey_times(info["departure_time"], None)
+        year, month, day, hour, minute = convert_datetime_to_tuple(str(outbound))
+        
+        url = get_single_ticket_url(
+            departing_code, arriving_code, "departing", f"{day}{month}{year}", hour, minute
+        )
+        
+        print("Departing code: ", departing_code)
+        print("Arriving code: ", arriving_code)
+        print("Outbound journey: ", outbound)
+        print("Booking URL: ", url)
+        
     elif request[0] in ["platform_details","address_details","train_operator","ticket_off_hours","ticket_machine","seated_area","waiting_area","toilets","baby_changing","wifi","ramp_access","ticket_gates"]:
         columns = nlp.intent_to_function.get(request[0])
         print(nlp.get_station_details_by_columns(info["station"],columns))
@@ -193,7 +207,6 @@ def complete_request():
     elif request[0] == "train_delays":
         pass
         ##get times from thing and get from prediction model
-
 
     elif request[0] == "departure_time":
         pass
@@ -232,13 +245,9 @@ current_requirements = []
 request = ""
 info = {}
 
-
 current_stage = "waiting"  # Initial stage
 #waiting
 #data_collection
-
-
-
 
 # --- Chat Controller ---
 def send_message():
@@ -272,7 +281,6 @@ def send_message():
 
     print(info)
     print(current_requirements)
-    
 
 # --- GUI Main ---
 def gui_main():
