@@ -77,13 +77,6 @@ def llm_generate_question_async():
     threading.Thread(target=generate).start()
 
 # --- Prompt Builders ---
-def add_ticket_followup():
-    prompt = (
-        "Tell the user its hyperlink is ready for the ticket:\n" +
-        "\nDo not discuss anything else."
-    )
-    messages.append({"role": "assistant", "content": prompt})
-    llm_generate_question_async()
 
 
 def hello_prompt_builder():
@@ -163,6 +156,7 @@ def collect_info(user_input):
             info["arrival_station"] = arrival
             requirements.remove("arrival_station")
             print("Arrival found: ", arrival)
+            
         # if similar_stations:
         #     messages[0] = incorrect_station_prompt_builder(similar_stations[0])
         #     llm_generate_question_async()
@@ -181,10 +175,14 @@ def collect_info(user_input):
         #add similar stations logic
         
     if "departure_time" in current_requirements:
-        journey = nlp.extract_date_and_time(user_input)
-        if journey.get("DATE") != [] or journey.get("TIME") != []:
+        split_index = nlp.get_return_ticket(user_input)
+        outbound, inbound = nlp.get_journey_times(user_input, split_index)
+        
+        if outbound.get("DATE") != [] or outbound.get("TIME") != []:
             requirements.remove("departure_time")
-            info["departure_time"] = journey
+            info["departure_time"] = outbound
+            info["inbound_time"] = inbound
+        
 
     current_requirements = requirements
 
@@ -194,20 +192,31 @@ def complete_request():
     print(f"Request: {request[0]}")
     
     if request[0] == "booking_tickets":
+        print(f"Info: {info}")
         departing_code = knowledge_base.get_station_code_from_name(info["departure_station"])
         arriving_code = knowledge_base.get_station_code_from_name(info["arrival_station"])
-        outbound, _ = parse_journey_times(info["departure_time"], None)
+        outbound, inbound = parse_journey_times(info["departure_time"], info.get("inbound_time", {}))
         year, month, day, hour, minute = convert_datetime_to_tuple(str(outbound))
         
-        url = get_single_ticket_url(
-            departing_code, arriving_code, "departing", f"{day}{month}{year}", hour, minute
-        )
+        url = ""
+        
+        if "inbound_time" in info:
+            return_outbound, _ = parse_journey_times(info["inbound_time"], None)
+            return_year, return_month, return_day, return_hour, return_minute = convert_datetime_to_tuple(str(return_outbound))
+            url = get_return_ticket_url(
+                departing_code, arriving_code, "departing", f"{day}{month}{year}", hour, minute,
+                "departing", f"{return_day}{return_month}{return_year}", return_hour, return_minute
+            )
+        else:
+            url = get_single_ticket_url(
+                departing_code, arriving_code, "departing", f"{day}{month}{year}", hour, minute
+            )
         
         print("Departing code: ", departing_code)
         print("Arriving code: ", arriving_code)
         print("Outbound journey: ", outbound)
         print("Booking URL: ", url)
-        add_ticket_followup()
+        add_message(url, is_user=False)
         
     elif request[0] in ["platform_details","address_details","train_operator","ticket_off_hours","ticket_machine","seated_area","waiting_area","toilets","baby_changing","wifi","ramp_access","ticket_gates"]:
         columns = nlp.intent_to_function.get(request[0])
@@ -224,7 +233,7 @@ def complete_request():
         llm_generate_question_async()
     
     elif request[0] == "train_delays":
-        outbound_date, inbound_date = parse_journey_times(info["departure_time"], None)
+        outbound_date, inbound_date = parse_journey_times(info["departure_time"], {})
         _,_,_,hour,minute = convert_datetime_to_tuple(str(outbound_date))
         delay = prediction_model.predict_delay_for_time(hour+":"+minute)
         print(delay)
@@ -245,9 +254,6 @@ question_requirements = {
 
     "train_delays" : ["departure_time"],
     "departure_time" : ["departure_station"],
-
-
-
     "platform_details" : ["station"],
     "address_details" : ["station"],
     "train_operator" : ["station"],
@@ -262,7 +268,6 @@ question_requirements = {
     "ticket_gates" : ["station"],
     "route_details" : ["departure_station", "arrival_station"],
     "booking_tickets" : ["departure_station", "arrival_station", "departure_time"],
-
 }
 
 current_requirements = []
