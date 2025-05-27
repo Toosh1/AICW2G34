@@ -78,23 +78,18 @@ def hello_prompt_builder():
     }
 
 
-def generic_prompt_builder(keys):
-    missing = [key for key in keys if key not in info or info[key] is None]
-    return {
-        "role": "system",
-        "content": (
-            "You are a railway assistant helping a user.However you cannot answer the question yet because you are missing some information.\n" +
-            "You need to ask the user for the following information:\n" +
-            "(IMPORTANT ) Only ask for the following info:\n" +
-            "\n".join(f"- {key}" for key in missing)
-        )
-    }
+def add_focused_followup(keys):
+    if not keys:
+        return
+    prompt = (
+        "Just ask the user for the following missing information:\n" +
+        "\n".join(f"- {key}" for key in keys) +
+        "\nDo not discuss anything else."
+    )
+    messages.append({"role": "assistant", "content": prompt})
+    llm_generate_question_async()
 
-def specific_prompt_builder(goal):
-    return {
-        "role": "system",
-        "content": f"Ask the user only for: {goal}"
-    }
+
 
 def incorrect_station_prompt_builder(close_stations):
     suggestion = ", ".join(close_stations[1])
@@ -256,18 +251,14 @@ def send_message():
         request = intent
         collect_info(user_input)
         if current_requirements != []:
-            messages[0] = generic_prompt_builder(current_requirements)
-            print(messages[0])
-            llm_generate_question_async()
+            add_focused_followup(current_requirements)
         else:
             complete_request()
 
     elif current_stage == "data_collection":
         collect_info(user_input)
         if current_requirements != []:
-            messages[0] = generic_prompt_builder(current_requirements)
-            print(messages[0])
-            llm_generate_question_async()
+            add_focused_followup(current_requirements)
         else:
             complete_request()
 
