@@ -6,21 +6,13 @@ from llama_cpp import Llama
 from dotenv import load_dotenv
 import nlp
 import journey_planner
-from queue import Queue
 
 load_dotenv()
 llm = Llama(model_path=os.getenv("LLAMA_PATH"), verbose=False)
 
 # Global variables
-messages = []
-llm_queue = Queue()
-llm_processing = False
-current_requirements = []
-request = ""
-info = {}
-current_stage = "waiting"  # Initial stage: waiting, data_collection
-
-# --- Chat Functions ---
+messages = [""]
+# --- Chat Functionality ---
 def append_message(role, message):
     messages.append({"role": role, "content": message})
 
@@ -59,6 +51,11 @@ def add_message(text, is_user):
     chat_frame.update_idletasks()
     chat_frame.yview_moveto(1.0)
 
+from queue import Queue
+
+llm_queue = Queue()
+llm_processing = False
+
 def llm_generate_question_async():
     typing_label = tk.Label(chat_canvas_frame, text="Pisces is typing...", fg="gray", font=("Arial", 10, "italic"), bg="#F0F0F0")
     typing_label.pack(anchor='w', padx=10, pady=2)
@@ -75,105 +72,170 @@ def llm_generate_question_async():
 
 # --- Prompt Builders ---
 def hello_prompt_builder():
-    return {"role": "system", "content": "You are a railway assistant helping a user book a ticket. Just greet the user."}
+    return {
+        "role": "system",
+        "content": "You are a railway assistant helping a user book a ticket. Just greet the user."
+    }
 
-def add_focused_followup(keys):
-    if not keys:
-        return
-    prompt = (
-        "Just ask the user for the following missing information:\n" +
-        "\n".join(f"- {key}" for key in keys) +
-        "\nDo not discuss anything else."
-    )
-    messages.append({"role": "assistant", "content": prompt})
-    llm_generate_question_async()
+
+def generic_prompt_builder(keys):
+    missing = [key for key in keys if key not in info or info[key] is None]
+    return {
+        "role": "system",
+        "content": (
+            "You are a railway assistant helping a user.However you cannot answer the question yet because you are missing some information.\n" +
+            "You need to ask the user for the following information:\n" +
+            "(IMPORTANT ) Only ask for the following info:\n" +
+            "\n".join(f"- {key}" for key in missing)
+        )
+    }
+
+def specific_prompt_builder(goal):
+    return {
+        "role": "system",
+        "content": f"Ask the user only for: {goal}"
+    }
+
+def incorrect_station_prompt_builder(close_stations):
+    suggestion = ", ".join(close_stations[1])
+    return {
+        "role": "system",
+        "content": (
+            "You are a railway assistant helping a user.However the user entered a station that doesn't exist.\n" +
+            f"(IMPORTANT ) The station '{close_stations[0]}' was not recognized. Try: {suggestion}."
+        )
+    }
+
+
+def reply_prompt_builder(reply):
+    return {
+        "role": "system",
+        "content": (
+            "You are a railway assistant helping a user. You have checked and below is the answer to the question the user asked.\n" +
+            "Only provide the user with the following information." +
+            "\n" + reply
+        )
+    }
+def route_prompt_builder(reply):
+    return {
+        "role": "system",
+        "content": (
+            "You are a railway assistant helping a user. You have checked and below is the answer to the question the user asked.\n" +
+            "Only provide the user with the following information. Explain the entire route following, provide the entire route." +
+            "\n" + reply
+        )
+    }
 
 # --- NLP Integration ---
+
 def collect_info(user_input):
     global current_requirements, info
-    requirements = current_requirements.copy()
-
+    requirements = current_requirements
     if "station" in requirements:
-        station = nlp.extract_single_station(user_input)
-        if station:
-            info["station"] = station
-            requirements.remove("station")
+            station = nlp.extract_single_station(user_input)
+            if station:
+                info["station"] = station
+                requirements.remove("station")
 
-    if "departure_station" in requirements and "arrival_station" in requirements:
-        departure, arrival, _ = nlp.get_station_data(user_input)
+    
+
+    if "departure_station" in current_requirements and "arrival_station" in current_requirements:
+        departure, arrival, similar_stations = nlp.get_station_data(user_input)
         if departure:
             info["departure_station"] = departure
             requirements.remove("departure_station")
+            print("Departure found: ", departure)
         if arrival:
             info["arrival_station"] = arrival
             requirements.remove("arrival_station")
+            print("Arrival found: ", arrival)
+        # if similar_stations:
+        #     messages[0] = incorrect_station_prompt_builder(similar_stations[0])
+        #     llm_generate_question_async()
 
     elif "departure_station" in requirements:
-        station = nlp.extract_single_station(user_input)
-        if station:
-            info["departure_station"] = station
-            requirements.remove("departure_station")
+            station = nlp.extract_single_station(user_input)
+            if station:
+                info["departure_station"] = station
+                requirements.remove("departure_station")
 
     elif "arrival_station" in requirements:
-        station = nlp.extract_single_station(user_input)
-        if station:
-            info["arrival_station"] = station
-            requirements.remove("arrival_station")
-
-    if "departure_time" in requirements:
+            station = nlp.extract_single_station(user_input)
+            if station:
+                info["arrival_station"] = station
+                requirements.remove("arrival_station")
+        #add similar stations logic
+        
+    if "departure_time" in current_requirements:
         journey = nlp.extract_date_and_time(user_input)
-        if journey.get("DATE"):
-            info["departure_time"] = journey
+        if journey.get("DATE") != []:
             requirements.remove("departure_time")
+            info["departure_time"] = journey
 
     current_requirements = requirements
 
-# --- Request Completion ---
 def complete_request():
-    global info, request, current_stage
+    global info, request,current_stage
+    print("message completed")
     if request[0] == "booking_tickets":
-        print(f"Booked ticket from {info['departure_station']} to {info['arrival_station']}")
+        print(f"wow booked ticket from {info["departure_station"]} to {info['arrival_station']}")
+        ##you need to print hyperlink here all data should be in info
 
-    elif request[0] in ["platform_details", "address_details", "train_operator", "ticket_off_hours", "ticket_machine", "seated_area", "waiting_area", "toilets", "baby_changing", "wifi", "ramp_access", "ticket_gates"]:
+    elif request[0] in ["platform_details","address_details","train_operator","ticket_off_hours","ticket_machine","seated_area","waiting_area","toilets","baby_changing","wifi","ramp_access","ticket_gates"]:
         columns = nlp.intent_to_function.get(request[0])
-        station_info = nlp.get_station_details_by_columns(info["station"], columns)
-        messages.append({"role": "assistant", "content": station_info})
+        print(nlp.get_station_details_by_columns(info["station"],columns))
+        messages[0] = reply_prompt_builder(nlp.get_station_details_by_columns(info["station"],columns))
+        print(messages[0])
         llm_generate_question_async()
 
     elif request[0] == "route_details":
-        route = journey_planner.get_optimal_path(info["departure_station"], info["arrival_station"])
-        formatted_route = journey_planner.format_route(route)
-        messages.append({"role": "assistant", "content": formatted_route})
+        route = journey_planner.get_optimal_path(info["departure_station"],info["arrival_station"])
+        string_path = journey_planner.format_route(route)
+        messages[0] = route_prompt_builder(string_path)
+        print(messages[0])
         llm_generate_question_async()
+    
 
-    elif request[0] == "train_delays":
-        time, _ = nlp.parse_journey_times(info["departure_time"], None)
-        # Here you would connect to your prediction model
     messages.clear()
-    messages.append(hello_prompt_builder())
     current_stage = "waiting"
     info = {}
     request = ""
 
-# --- Intent to Requirements Mapping ---
 question_requirements = {
-    "train_delays": ["departure_time"],
-    "departure_time": ["departure_station"],
-    "platform_details": ["station"],
-    "address_details": ["station"],
-    "train_operator": ["station"],
-    "ticket_off_hours": ["station"],
-    "ticket_machine": ["station"],
-    "seated_area": ["station"],
-    "waiting_area": ["station"],
-    "toilets": ["station"],
-    "baby_changing": ["station"],
-    "wifi": ["station"],
-    "ramp_access": ["station"],
-    "ticket_gates": ["station"],
-    "route_details": ["departure_station", "arrival_station"],
-    "booking_tickets": ["departure_station", "arrival_station", "departure_time"]
+
+    "train_delays" : ["departure_time"],
+    "departure_time" : ["departure_station"],
+
+
+
+    "platform_details" : ["station"],
+    "address_details" : ["station"],
+    "train_operator" : ["station"],
+    "ticket_off_hours" : ["station"],
+    "ticket_machine" : ["station"],
+    "seated_area" : ["station"],
+    "waiting_area" : ["station"],
+    "toilets" : ["station"],
+    "baby_changing" : ["station"],
+    "wifi" : ["station"],
+    "ramp_access" : ["station"],
+    "ticket_gates" : ["station"],
+    "route_details" : ["departure_station", "arrival_station"],
+    "booking_tickets" : ["departure_station", "arrival_station", "departure_time"],
+
 }
+
+current_requirements = []
+request = ""
+info = {}
+
+
+current_stage = "waiting"  # Initial stage
+#waiting
+#data_collection
+
+
+
 
 # --- Chat Controller ---
 def send_message():
@@ -181,32 +243,39 @@ def send_message():
     user_input = entry_box.get().strip()
     if user_input == "":
         return
-
     add_message(user_input, is_user=True)
     entry_box.delete(0, tk.END)
     append_message("user", user_input)
-
+    
     if current_stage == "waiting":
-        intent = nlp.predict_classifier(user_input, nlp.intent_classifier)
+        intent = nlp.predict_classifier(user_input,nlp.intent_classifier)
         if intent[0] == "station_faq":
             intent = nlp.predict_classifier(user_input, nlp.faq_classifier)
         current_stage = "data_collection"
         current_requirements = question_requirements.get(intent[0], [])
         request = intent
         collect_info(user_input)
-        if current_requirements:
-            add_focused_followup(current_requirements)
+        if current_requirements != []:
+            messages[0] = generic_prompt_builder(current_requirements)
+            print(messages[0])
+            llm_generate_question_async()
         else:
             complete_request()
 
     elif current_stage == "data_collection":
         collect_info(user_input)
-        if current_requirements:
-            add_focused_followup(current_requirements)
+        if current_requirements != []:
+            messages[0] = generic_prompt_builder(current_requirements)
+            print(messages[0])
+            llm_generate_question_async()
         else:
             complete_request()
 
-# --- GUI Setup ---
+    print(info)
+    print(current_requirements)
+    
+
+# --- GUI Main ---
 def gui_main():
     global root, chat_frame, chat_canvas_frame, entry_box
 
@@ -215,6 +284,7 @@ def gui_main():
     root.geometry("420x580")
     root.configure(bg="#F0F0F0")
 
+    # Chat display
     container = tk.Frame(root, bg="#F0F0F0")
     container.pack(fill=tk.BOTH, expand=True)
 
@@ -234,6 +304,7 @@ def gui_main():
 
     chat_canvas_frame.bind("<Configure>", on_configure)
 
+    # Bottom input
     bottom_frame = tk.Frame(root, bg="white", padx=10, pady=10)
     bottom_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
@@ -244,7 +315,8 @@ def gui_main():
     send_button = tk.Button(bottom_frame, text="Send", command=send_message, font=("Arial", 10))
     send_button.pack(side=tk.RIGHT)
 
-    messages.append(hello_prompt_builder())
+    # Start conversation
+    messages[0] = hello_prompt_builder()
     llm_generate_question_async()
 
     root.mainloop()
