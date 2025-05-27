@@ -4,7 +4,7 @@ from sklearn.neighbors import  KNeighborsRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import pandas as pd
 
-df = pd.read_csv("../data/2024_service_details_Norwich_to_London.csv")
+df = pd.read_csv("src/data/2024_service_details_Norwich_to_London.csv")
 
 print(df.head())
 

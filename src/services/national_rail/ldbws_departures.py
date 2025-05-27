@@ -1,4 +1,4 @@
-import json, os, journey_planner
+import json, os, chatbot.journey_planner as journey_planner
 from zeep import Client
 from dotenv import load_dotenv
 

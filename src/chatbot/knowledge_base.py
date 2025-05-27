@@ -27,24 +27,7 @@ cancellation_reasons = {}
 vias = {}
 tocs = {}
 
-intent_to_function = {
-    "train_delays": "",#function to get train delays
-    "route_details": "",#function to get route details
-    "departure_time": "",#function to get departure time
-    "arrival_times": "",#function to get arrival times
-    "platform_details": "",#function to get platform details
-    "address_details": ["database",["address1","address2","address3","address4","postcode"]],
-    "train_operator": ["database",["operator"]],
-    "ticket_off_hours": ["database",["ticket_office_hours"]],
-    "ticket_machine": ["database",["ticket_machine_available"]],
-    "seated_area": ["database",["seated_area_available"]],
-    "waiting_area": ["database",["waiting_room_available"]],
-    "toilets": ["database",["toilets_available"]],
-    "baby_changing": ["database",["baby_change_available"]],
-    "wifi": ["database",["wifi_available"]],
-    "ramp_access": ["database",["ramp_for_train_access_available"]],
-    "ticket_gates": ["database",["ticket_gates_available"]],
-}
+
 
 conn = psycopg2.connect(
     host="localhost",
@@ -263,11 +246,12 @@ def get_station_code_from_name(name: str) -> str:
     :param name: The name of the station.
     :return: The CRS code of the station.
     """
+    print(name.title())
     with conn.cursor() as cur:
         cur.execute("""
             SELECT crs FROM station_codes
             WHERE name = %s
-        """, (name,))
+        """, (name.title(),))
         row = cur.fetchone()
         if row is not None:
             return row[0]
@@ -648,6 +632,46 @@ def get_all_station_names() -> list[str]:
         cur.execute("SELECT name FROM station_codes")
         rows = cur.fetchall()
         return [get_processed_station_name(row[0]) for row in rows]
+
+def get_station_details_by_columns(name: str, columns: list[str]) -> str:
+    """
+    Get specified station details by station name and return as a string.
+    :param name: The name of the station.
+    :param columns: List of column names to retrieve.
+    :return: String of column values with labels.
+    """
+    crs = get_station_code_from_name(name)
+    if crs == "Invalid station name.":
+        return "Invalid station name."
+    col_str = ", ".join(columns)
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT {col_str} FROM station_codes WHERE crs = %s", (crs,))
+        row = cur.fetchone()
+        if row is None:
+            return "Station not found."
+        info = []
+        for col, val in zip(columns, row):
+            info.append(f"{col.replace('_', ' ').capitalize()}: {val}")
+        return "\n".join(info)
+
+
+intent_to_function = {
+    "train_delays": "",  # function to get train delays
+    "route_details": "",  # function to get route details
+    "departure_time": "",  # function to get departure time
+    "address_details": ["address1", "address2", "address3", "address4", "postcode"],
+    "train_operator": ["operator"],
+    "ticket_off_hours": ["ticket_office_hours"],
+    "ticket_machine": ["ticket_machine_available"],
+    "seated_area": ["seated_area_available"],
+    "waiting_area": ["waiting_room_available"],
+    "toilets": ["toilets_available"],
+    "baby_changing": ["baby_change_available"],
+    "wifi": ["wifi_available"],
+    "ramp_access": ["ramp_for_train_access_available"],
+    "ticket_gates": ["ticket_gates_available"],
+}
+
 
 # Main ------------------------------------------------------
 

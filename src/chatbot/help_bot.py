@@ -9,7 +9,7 @@ import json
 from llama_cpp import Llama
 from dotenv import load_dotenv
 import nlp
-import services.national_rail.journey_planner as journey_planner 
+import chatbot.journey_planner as journey_planner 
 import knowledge_base as kb
 import interface
 
@@ -24,25 +24,7 @@ info = {
     "departure_date": None,
 }
 
-# question_requirements = {
-#     "train_delays" : ["departure_station"],
-#     "route_details" : ["departure_station", "arrival_station"],
-#     "departure_time" : ["departure_station"],
-#     "arrival_times" : ["arrival_station"],
-#     "platform_details" : ["departure_station"],
-#     "address_details" : ["departure_station"],
-#     "train_operator" : ["departure_station"],
-#     "ticket_off_hours" : ["departure_station"],
-#     "ticket_machine" : ["departure_station"],
-#     "seated_area" : ["station"],
-#     "waiting_area" : ["station"],
-#     "toilets" : ["station"],
-#     "baby_changing" : ["station"],
-#     "wifi" : ["station"],
-#     "ramp_access" : ["station"],
-#     "ticket_gates" : ["station"],
 
-# }
 
 
 def help_prompt_builder(station_info: str):
@@ -87,6 +69,7 @@ def main():
     interface.main()
     messages[0] = generic_prompt_builder()
     llm_generate_question()  
+    
 
 
 if __name__ == "__main__":

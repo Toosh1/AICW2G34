@@ -158,8 +158,9 @@ def get_optimal_path(start_station, end_station):
     
     return optimal_path
 
-def print_route(optimal_path: list[tuple]):
+def format_route(optimal_path: list[tuple]) -> str:
     current_route = None
+    output = []
 
     # Merge the list of tuples into a single list
     merged_path = []
@@ -169,9 +170,10 @@ def print_route(optimal_path: list[tuple]):
 
     for station, route in optimal_path:
         if current_route != route:
-            print(f"\n--- Route {route} ---")
+            output.append(f"\n--- Route {route} ---")
             current_route = route
-        print(f"→ {station}")
+        output.append(f"→ {station}")
+    return "\n".join(output)
 
 routes, route_objects = load_routes_from_csv(FILE_PATH)
 graph, route_map = build_station_graph_with_routes(route_objects)
@@ -182,5 +184,4 @@ if __name__ == "__main__":
     end_station = "NORWICH"
     route = get_optimal_path(start_station, end_station)
     print(f"Route from {start_station} to {end_station}:")
-    print(route)
-    print_route(route)
+    print(format_route(route))
