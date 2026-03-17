@@ -1,0 +1,11 @@
+{
+  "name": "pisces",
+  "version": "1.0.0",
+  "description": "Pisces train assistant frontend",
+  "scripts": {
+    "start": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.0.0"
+  }
+}

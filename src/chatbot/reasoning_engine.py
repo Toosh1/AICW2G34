@@ -81,7 +81,7 @@ def llm_generate_question():
     print(f"\033[93mPisces: {llm_question}\033[0m")
 
 def fill_station_info(user_input):
-    
+    pass
 
 def main():
     #Firstly ask the user for all basic information , departure station, arrival station and departure time

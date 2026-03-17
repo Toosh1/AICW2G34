@@ -6,7 +6,6 @@ import pandas as pd
 
 df = pd.read_csv("src/data/2024_service_details_Norwich_to_London.csv")
 
-print(df.head())
 
 def time_to_minutes(t):
     """
@@ -44,17 +43,6 @@ y_pred = knn_regressor.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 
-print(f'Mean Squared Error: {mse}')
-print(f'R-Squared: {r2}')
-
-plt.scatter(X_test, y_test, color='red', label='Actual')
-plt.scatter(X_test, y_pred, color='blue', label='Predicted')
-plt.title('KNN Regression')
-plt.xlabel('Planned Departure (mins)')
-plt.ylabel('Arrival Delay (mins)')
-plt.title('KNN Regression for Train Delays')
-plt.legend()
-plt.show()
 
 def predict_delay_for_time(departure_time_str):
     """
