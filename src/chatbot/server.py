@@ -29,4 +29,4 @@ class ChatHandler(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     print('Pisces server running on http://localhost:8000')
-    HTTPServer(('localhost', 8000), ChatHandler).serve_forever()
+    HTTPServer(('localhost', 8000), ChatHandler).serve_forever()   
