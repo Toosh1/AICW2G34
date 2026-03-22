@@ -3,6 +3,7 @@ from llama_cpp import Llama
 from dotenv import load_dotenv
 import prediction_model
 import os, nlp, journey_planner, knowledge_base, sys
+from contingency import search_contingency
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -123,7 +124,16 @@ def complete_request():
         _, _, _, hour, minute = convert_datetime_to_tuple(str(outbound_date))
         delay = prediction_model.predict_delay_for_time(hour + ":" + minute)
         messages[0] = reply_delay_builder(f"{delay:.2f}")
+    
+    elif request[0] == "contingency_info":
+        query = messages[-1]["content"]
+        station = info.get("station") or info.get("departure_station")
+        chunks, sources = search_contingency(query, station=station)
 
+        context = "\n\n".join(chunks)
+        source_list = ", ".join(set(sources))
+
+        messages[0] = contingency_prompt_builder(context, source_list)
 
     current_stage = "waiting"
     info = {}

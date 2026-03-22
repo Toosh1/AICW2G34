@@ -5,64 +5,77 @@ import chromadb
 from docx import Document
 from docx.oxml.ns import qn
 
+def get_blocks_in_order(doc):
+    """Returns paragraphs and table rows in document reading order."""
+    blocks = []
+    for block in doc.element.body:
+        if block.tag == qn("w:p"):
+            text = "".join(node.text or "" for node in block.iter() if node.tag == qn("w:t")).strip()
+            style = block.style if block.style is not None else ""
+            if text:
+                blocks.append({"type": "paragraph", "text": text, "style": style})
+
+        elif block.tag == qn("w:tbl"):
+            for row in block.findall(".//" + qn("w:tr")):
+                cells = row.findall(".//" + qn("w:tc"))
+                row_text = " | ".join(
+                    "".join(node.text or "" for node in cell.iter() if node.tag == qn("w:t"))
+                    for cell in cells
+                ).strip()
+                if row_text:
+                    blocks.append({"type": "table_row", "text": row_text, "style": ""})
+    return blocks
+
+
 def ingest_documents(docs_folder="src/data/contingency_plans"):
     client = chromadb.PersistentClient(path="./chroma_db")
     client.delete_collection("railway_contingency")
     collection = client.create_collection("railway_contingency")
 
-    files_processed = 0
-    chunk_count = 0
-    
     for filename in os.listdir(docs_folder):
         if filename.endswith(".docx"):
-            station_name = filename.replace(".docx", "").title()
-            
+            station_name = filename.replace(".docx", "")
             doc = Document(f"{docs_folder}/{filename}")
-            paragraphs = []
-            for block in doc.element.body:
-                # Normal paragraph
-                if block.tag == qn("w:p"):
-                    text = block.text_content() if hasattr(block, "text_content") else "".join(
-                        node.text or "" for node in block.iter() if node.tag == qn("w:t")
-                    )
-                    if text.strip():
-                        paragraphs.append(text.strip())
+            blocks = get_blocks_in_order(doc)
 
-                # Table
-                elif block.tag == qn("w:tbl"):
-                    for row in block.findall(".//" + qn("w:tr")):
-                        cells = row.findall(".//" + qn("w:tc"))
-                        row_text = " | ".join(
-                            "".join(node.text or "" for node in cell.iter() if node.tag == qn("w:t"))
-                            for cell in cells
-                        ).strip()
-                        if row_text:
-                            paragraphs.append(row_text)
+            # Split into chunks at every heading
+            chunks = []
+            current_heading = "General"
+            current_text = []
 
-            chunk_size = 10
-            chunks = [
-                " ".join(paragraphs[i:i+chunk_size])
-                for i in range(0, len(paragraphs), chunk_size)
-            ]
+            for block in blocks:
+                is_heading = "Heading" in block["style"] or block["text"].isupper()
+                if is_heading and current_text:
+                    chunks.append({
+                        "heading": current_heading,
+                        "text": " ".join(current_text)
+                    })
+                    current_heading = block["text"]
+                    current_text = []
+                else:
+                    current_text.append(block["text"])
+
+            # Don't forget the last section
+            if current_text:
+                chunks.append({
+                    "heading": current_heading,
+                    "text": " ".join(current_text)
+                })
 
             for i, chunk in enumerate(chunks):
                 collection.add(
-                    documents=[chunk],
+                    documents=[f"{chunk['heading']}: {chunk['text']}"],
                     ids=[f"{filename}_chunk_{i}"],
                     metadatas=[{
                         "source": filename,
                         "station": station_name,
+                        "section": chunk["heading"],
                         "chunk": i
                     }]
                 )
-            
-            files_processed += 1
-            chunk_count += len(chunks)
-            print(f"Processing: {filename} ({len(chunks)} chunks)")
+            print(f"Ingested: {filename} ({len(chunks)} chunks)")
 
-    print(f"Ingestion complete. Files processed: {files_processed}, Total chunks: {chunk_count}")
-
-def search_contingency(query: str, station: str = None, n_results=3):
+def search_contingency(query: str, station: str = None, n_results=1):
     client = chromadb.PersistentClient(path="./chroma_db")
     collection = client.get_collection("railway_contingency")
     where = {"station": station} if station else None
@@ -84,7 +97,7 @@ if __name__ == "__main__":
         if query.lower() == 'quit':
             break
         
-        chunks, sources = search_contingency(query,"Poole",3)
+        chunks, sources = search_contingency(query,"Poole",1)
         for i, (chunk, source) in enumerate(zip(chunks, sources)):
             print(f"--- Result {i+1} from {source} ---")
             print(chunk)
